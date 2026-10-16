@@ -33,7 +33,7 @@ Purple + Black; Light Mode and Dark Mode
 
 Database
 
-laundry_management_db (MySQL)
+laundry_db (MySQL)
 
 គោលបំណងឯកសារ: កំណត់ទំហំ Project, Modules, Database, Architecture, Folder Structure, Routes, Theme, Security និងដំណាក់កាលអភិវឌ្ឍន៍ មុនចាប់ផ្តើមសរសេរ Code។
 
@@ -315,7 +315,7 @@ Store amounts as DECIMAL, never floating-point. Version 1 assumes discount_amoun
 
 5. MySQL Database Design — Seven Tables
 
-Database: laundry_management_db
+Database: laundry_db
 Engine/encoding: InnoDB, utf8mb4
 Money: DECIMAL(12,2) (KHR in MVP)
 IDs: BIGINT UNSIGNED AUTO_INCREMENT
@@ -1243,7 +1243,7 @@ Do not dynamically concatenate class fragments (e.g. bg-${color}-500 in PHP/JS);
 
 9. Run & Development Setup
 
-Install PHP 8.x, MySQL and Node.js/npm. Create database laundry_management_db with utf8mb4.
+Install PHP 8.x, MySQL and Node.js/npm. Create database laundry_db with utf8mb4.
 
 Create files/folders matching section 6. Copy config/local.example.php → config/local.php and fill local credentials. local.php must be gitignored. This is a PHP array config file, NOT .env (Native PHP does not parse .env automatically).
 

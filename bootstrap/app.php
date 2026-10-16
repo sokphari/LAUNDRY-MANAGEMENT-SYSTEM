@@ -5,6 +5,12 @@ declare(strict_types=1);
 use App\Core\Router;
 
 define('BASE_PATH', dirname(__DIR__));
+require BASE_PATH . '/app/Helpers/functions.php';
+
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header("Content-Security-Policy: default-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:");
 
 spl_autoload_register(static function (string $class): void {
     $prefix = 'App\\';

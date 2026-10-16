@@ -12,3 +12,19 @@
   --color-dark-base: #0C0C12;
   --color-dark-card: #1C1B27;
 }
+
+.js-customer-submenu {
+  max-height: 0;
+  opacity: 0;
+}
+
+.customer-submenu-open {
+  max-height: 10rem;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js-customer-submenu {
+    transition-duration: 0.01ms;
+  }
+}

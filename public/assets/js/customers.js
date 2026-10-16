@@ -1,0 +1,169 @@
+(() => {
+  const form = document.getElementById('customer-search-form');
+  const input = document.getElementById('customer-search');
+  const rows = document.getElementById('customer-rows');
+  const status = document.getElementById('customer-search-status');
+  const resultCount = document.getElementById('customer-result-count');
+
+  if (!form || !input || !rows || !status) return;
+
+  let debounceTimer;
+  let activeRequest;
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const iconPaths = {
+    view: 'M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z',
+    edit: 'm14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z',
+    delete: 'M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3',
+  };
+
+  const makeIcon = (name) => {
+    const svg = document.createElementNS(svgNamespace, 'svg');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.8');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('class', 'size-4');
+
+    if (name === 'view') {
+      const eye = document.createElementNS(svgNamespace, 'path');
+      eye.setAttribute('d', iconPaths.view);
+      const pupil = document.createElementNS(svgNamespace, 'circle');
+      pupil.setAttribute('cx', '12');
+      pupil.setAttribute('cy', '12');
+      pupil.setAttribute('r', '2.5');
+      svg.append(eye, pupil);
+    } else {
+      const path = document.createElementNS(svgNamespace, 'path');
+      path.setAttribute('d', iconPaths[name]);
+      svg.append(path);
+    }
+    return svg;
+  };
+
+  const makeActionLink = (id, customerName, action, label, colorClass) => {
+    const link = document.createElement('a');
+    link.href = `/customers/${encodeURIComponent(id)}${action === 'edit' ? '/edit' : ''}`;
+    link.className = `grid size-9 place-items-center rounded-lg border border-zinc-200 ${colorClass} focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700`;
+    link.setAttribute('aria-label', `${label} ${customerName}`);
+    link.title = `${label} customer`;
+    link.append(makeIcon(action));
+    return link;
+  };
+
+  const makeCell = (text, className = 'px-5 py-4') => {
+    const cell = document.createElement('td');
+    cell.className = className;
+    cell.textContent = text || '—';
+    return cell;
+  };
+
+  const showEmptyRow = (message) => {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 6;
+    cell.className = 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400';
+    cell.textContent = message;
+    row.append(cell);
+    rows.replaceChildren(row);
+  };
+
+  const renderCustomers = (customers, query) => {
+    rows.replaceChildren();
+
+    if (customers.length === 0) {
+      showEmptyRow(query ? 'No customers matched your search.' : 'No customers yet. Add your first customer to get started.');
+    } else {
+      customers.forEach((customer, index) => {
+        const id = String(customer.id ?? '');
+        if (!/^\d+$/.test(id)) return;
+        const name = String(customer.name ?? '');
+        const row = document.createElement('tr');
+        row.append(makeCell(String(index + 1), 'px-5 py-4 text-zinc-500 dark:text-zinc-400'));
+        row.append(makeCell(name, 'px-5 py-4 font-medium'));
+        row.append(makeCell(String(customer.phone ?? ''), 'px-5 py-4 whitespace-nowrap'));
+        row.append(makeCell(String(customer.address ?? '') || '—', 'max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300'));
+        const createdAt = new Date(String(customer.created_at ?? '').replace(' ', 'T'));
+        const formattedCreatedAt = Number.isNaN(createdAt.getTime())
+          ? String(customer.created_at ?? '')
+          : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt);
+        row.append(makeCell(formattedCreatedAt, 'px-5 py-4 whitespace-nowrap text-zinc-600 dark:text-zinc-300'));
+
+        const actionCell = document.createElement('td');
+        actionCell.className = 'px-5 py-4';
+        const actionGroup = document.createElement('div');
+        actionGroup.className = 'flex items-center justify-end gap-2';
+        actionGroup.append(makeActionLink(id, name, 'view', 'View', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
+        actionGroup.append(makeActionLink(id, name, 'edit', 'Edit', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
+
+        const deleteForm = document.createElement('form');
+        deleteForm.method = 'post';
+        deleteForm.action = `/customers/${encodeURIComponent(id)}/delete`;
+        deleteForm.dataset.confirm = `Deactivate ${name || 'this customer'}? Existing records will be preserved.`;
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = '_csrf_token';
+        csrf.value = rows.dataset.csrfToken || '';
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'submit';
+        deleteButton.className = 'grid size-9 place-items-center rounded-lg border border-zinc-200 text-red-600 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-zinc-700 dark:hover:border-red-900 dark:hover:bg-red-950';
+        deleteButton.setAttribute('aria-label', `Delete ${name}`);
+        deleteButton.title = 'Delete customer';
+        deleteButton.append(makeIcon('delete'));
+        deleteForm.append(csrf, deleteButton);
+        actionGroup.append(deleteForm);
+        actionCell.append(actionGroup);
+        row.append(actionCell);
+        rows.append(row);
+      });
+    }
+
+    if (resultCount) {
+      resultCount.textContent = `Showing ${customers.length} customer${customers.length === 1 ? '' : 's'}${query ? ' matching your search' : ''}${customers.length === 100 ? ' (maximum shown)' : ''}.`;
+    }
+    status.textContent = `${customers.length} customer${customers.length === 1 ? '' : 's'} found.`;
+  };
+
+  const search = async () => {
+    const query = input.value.trim();
+    activeRequest?.abort();
+    activeRequest = new AbortController();
+
+    const url = new URL('/customers/search', window.location.origin);
+    if (query) url.searchParams.set('q', query);
+
+    status.textContent = 'Searching customers…';
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+        signal: activeRequest.signal,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Search failed. Please try again.');
+      renderCustomers(Array.isArray(result.customers) ? result.customers : [], query);
+
+      const pageUrl = new URL(window.location.href);
+      if (query) pageUrl.searchParams.set('q', query);
+      else pageUrl.searchParams.delete('q');
+      window.history.replaceState({}, '', pageUrl);
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      status.textContent = error.message || 'Search failed. Please try again.';
+      showEmptyRow('Could not load customer search results. Please try again.');
+    }
+  };
+
+  input.addEventListener('input', () => {
+    window.clearTimeout(debounceTimer);
+    debounceTimer = window.setTimeout(search, 250);
+  });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    window.clearTimeout(debounceTimer);
+    search();
+  });
+})();

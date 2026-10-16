@@ -8,7 +8,7 @@ Project type	Single-shop PHP + MySQL Mini Project
 Backend	Native PHP 8.x, PDO, PHP Sessions
 Frontend	HTML5, Tailwind CSS v4, Vanilla JavaScript, Fetch API
 Theme	Purple + Black; Light Mode and Dark Mode
-Database	laundry_management_db (MySQL)
+Database	laundry_db (MySQL)
 
 
 គោលបំណងឯកសារ: កំណត់ទំហំ Project, Modules, Database, Architecture, Folder Structure, Routes, Theme, Security និងដំណាក់កាលអភិវឌ្ឍន៍ មុនចាប់ផ្តើមសរសេរ Code។
@@ -104,7 +104,7 @@ paid_amount     = SUM(payments.amount)
 remaining       = total_amount − paid_amount
 Store amounts as DECIMAL, never floating-point. Version 1 assumes discount_amount = 0 unless the shop enables manual discounts. Server must reject quantity <= 0, negative price and overpayment.
 5. MySQL Database Design — Seven Tables
-Database: laundry_management_db
+Database: laundry_db
 Engine/encoding: InnoDB, utf8mb4
 Money: DECIMAL(12,2) (KHR in MVP)
 IDs: BIGINT UNSIGNED AUTO_INCREMENT
@@ -423,7 +423,7 @@ For best visual result, execute the initial theme selection before stylesheet re
 8.4 Important Tailwind rule
 Do not dynamically concatenate class fragments (e.g. bg-${color}-500 in PHP/JS); Tailwind scans source files for complete class names. Use mapping of fully written class strings instead.
 9. Run & Development Setup
-1. Install PHP 8.x, MySQL and Node.js/npm. Create database laundry_management_db with utf8mb4.
+1. Install PHP 8.x, MySQL and Node.js/npm. Create database laundry_db with utf8mb4.
 2. Create files/folders matching section 6. Copy config/local.example.php → config/local.php and fill local credentials. local.php must be gitignored. This is a PHP array config file, NOT .env (Native PHP does not parse .env automatically).
 3. Build the seven SQL migration files (or import a schema SQL file). Create an admin account with password hashed by password_hash(); do not store plain passwords in seeds.
 4. Install Tailwind CLI using npm install. Start CSS watcher using npm run dev:css in one terminal.

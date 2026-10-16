@@ -6,8 +6,8 @@ return [
     'driver' => 'mysql',
     'host' => '127.0.0.1',
     'port' => 3306,
-    'database' => 'laundry_management_db',
+    'database' => 'laundry_db',
     'charset' => 'utf8mb4',
-    'username' => 'root',
-    'password' => '',
+    'username' => 'laundry_app',
+    'password' => 'choose-a-strong-password',
 ];

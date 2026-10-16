@@ -20,7 +20,7 @@ final class Database
         $driver = $config['driver'] ?? 'mysql';
         $host = $config['host'] ?? '127.0.0.1';
         $port = (int) ($config['port'] ?? 3306);
-        $database = $config['database'] ?? 'laundry_management_db';
+        $database = $config['database'] ?? 'laundry_db';
         $charset = $config['charset'] ?? 'utf8mb4';
         $dsn = sprintf('%s:host=%s;port=%d;dbname=%s;charset=%s', $driver, $host, $port, $database, $charset);
 
