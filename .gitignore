@@ -1,0 +1,6 @@
+/config/local.php
+/node_modules/
+/public/assets/css/app.css
+/storage/logs/*
+!/storage/logs/.gitkeep
+.DS_Store
