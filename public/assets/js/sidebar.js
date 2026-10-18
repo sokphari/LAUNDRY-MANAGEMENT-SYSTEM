@@ -1,4 +1,4 @@
-document.querySelectorAll('.js-customer-menu-toggle').forEach((button) => {
+document.querySelectorAll('.js-module-menu-toggle').forEach((button) => {
   button.addEventListener('click', () => {
     const submenu = document.getElementById(button.getAttribute('aria-controls'));
     const chevron = button.querySelector('svg');

@@ -1,0 +1,40 @@
+<section class="space-y-6">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <div><p class="text-sm font-semibold uppercase tracking-widest text-primary">Service management</p><h1 class="mt-2 text-3xl font-bold">Services</h1><p class="mt-2 text-zinc-600 dark:text-zinc-300">Manage the laundry services and prices available for orders.</p></div>
+        <?php if (($user['role'] ?? '') === 'admin'): ?><a href="/services/create" class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary-hover"><span class="mr-2 text-lg" aria-hidden="true">+</span> Add Service</a><?php endif; ?>
+    </div>
+    <?php if (is_array($flash) && in_array($flash['type'] ?? '', ['success', 'error'], true)): ?><p role="status" class="rounded-lg border px-4 py-3 text-sm <?= $flash['type'] === 'success' ? 'border-green-200 bg-green-50 text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-200' : 'border-red-200 bg-red-50 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200' ?>"><?= e($flash['message'] ?? '') ?></p><?php endif; ?>
+    <form id="service-search-form" method="get" action="/services" class="grid gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:grid-cols-[minmax(0,1fr)_200px] sm:items-end dark:bg-dark-card dark:ring-zinc-800">
+        <div><input id="service-search" name="q" type="search" value="<?= e($query) ?>" placeholder="Search by name…" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900"></div>
+        <div><select id="service-status" name="status" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900"><option value="all" <?= $status === 'all' ? 'selected' : '' ?>>All services</option><option value="active" <?= $status === 'active' ? 'selected' : '' ?>>Active</option><option value="inactive" <?= $status === 'inactive' ? 'selected' : '' ?>>Inactive</option></select></div>
+    </form>
+    <p id="service-search-status" class="sr-only" role="status" aria-live="polite"></p>
+    <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
+        <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left text-sm">
+            <thead class="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3">ID</th><th class="px-5 py-3">Service</th><th class="px-5 py-3">Description</th><th class="px-5 py-3">Price</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Created at</th><th class="px-5 py-3 text-right">Actions</th></tr></thead>
+            <tbody id="service-rows" data-csrf-token="<?= e($csrfToken) ?>" data-can-manage="<?= ($user['role'] ?? '') === 'admin' ? '1' : '0' ?>" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <?php foreach ($services as $index => $service): ?><tr>
+                <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400"><?= e($index + 1) ?></td>
+                <td class="px-5 py-4 font-medium"><?= e($service['name'] ?? '') ?></td>
+                <td class="max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e($service['description'] ?: '—') ?></td>
+                <td class="whitespace-nowrap px-5 py-4 font-medium"><?= e(number_format((float) $service['price'], 2)) ?> KHR / <?= e($service['billing_unit'] ?? 'piece') ?></td>
+                <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold <?= (int) $service['is_active'] === 1 ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' ?>"><?= (int) $service['is_active'] === 1 ? 'Active' : 'Inactive' ?></span></td>
+                <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e(date('d M Y, H:i', strtotime((string) $service['created_at']))) ?></td>
+                <td class="px-5 py-4"><div class="flex items-center justify-end gap-2">
+                    <a href="/services/<?= (int) $service['id'] ?>" aria-label="View <?= e($service['name'] ?? 'service') ?>" title="View service" class="grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:text-zinc-300">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>
+                    </a>
+                    <?php if (($user['role'] ?? '') === 'admin'): ?><a href="/services/<?= (int) $service['id'] ?>/edit" aria-label="Edit <?= e($service['name'] ?? 'service') ?>" title="Edit service" class="grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:text-zinc-300">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg>
+                    </a>
+                    <form method="post" action="/services/<?= (int) $service['id'] ?>/status" data-service-status-form><input type="hidden" name="_csrf_token" value="<?= e($csrfToken) ?>"><input type="hidden" name="is_active" value="<?= (int) $service['is_active'] === 1 ? '0' : '1' ?>"><button type="submit" aria-label="<?= (int) $service['is_active'] === 1 ? 'Deactivate' : 'Activate' ?> <?= e($service['name'] ?? 'service') ?>" title="<?= (int) $service['is_active'] === 1 ? 'Deactivate service' : 'Activate service' ?>" class="grid size-9 place-items-center rounded-lg border border-zinc-200 <?= (int) $service['is_active'] === 1 ? 'text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-900 dark:hover:bg-red-950' : 'text-green-700 hover:border-green-300 hover:bg-green-50 dark:text-green-300 dark:hover:border-green-900 dark:hover:bg-green-950' ?> focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v9m6.36-6.36a9 9 0 1 1-12.72 0"/></svg>
+                    </button></form><?php endif; ?>
+                </div></td>
+            </tr><?php endforeach; ?>
+            <?php if ($services === []): ?><tr><td colspan="7" class="px-5 py-12 text-center text-zinc-500 dark:text-zinc-400"><?= $loadError ? 'Service data is unavailable. Apply database migrations, then reload.' : ($query !== '' ? 'No services matched your filters.' : 'No services found for this status. Add your first service to get started.') ?></td></tr><?php endif; ?>
+            </tbody>
+        </table></div>
+        <div id="service-result-count" class="border-t border-zinc-100 px-5 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">Showing <?= count($services) ?> service<?= count($services) === 1 ? '' : 's' ?><?= $status !== 'all' ? ' with ' . e($status) . ' status' : '' ?><?= $query !== '' ? ' matching your search' : '' ?>.</div>
+    </div>
+</section>

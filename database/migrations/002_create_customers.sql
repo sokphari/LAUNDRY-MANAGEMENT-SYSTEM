@@ -11,3 +11,4 @@ CREATE TABLE customers (
     KEY customers_phone_index (phone),
     KEY customers_name_index (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+9

@@ -12,8 +12,10 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     <script src="/assets/js/sidebar.js" defer></script>
     <script src="/assets/js/actions.js" defer></script>
     <script src="/assets/js/customers.js" defer></script>
+    <script src="/assets/js/services.js" defer></script>
+    <script src="/assets/js/orders.js" defer></script>
 </head>
-<body class="min-h-screen bg-[#F8F7FC] text-zinc-900 dark:bg-dark-base dark:text-white">
+<body class="min-h-screen bg-[#F8FAFC] text-zinc-900 dark:bg-dark-base dark:text-white">
     <aside class="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-zinc-200 bg-white md:flex dark:border-zinc-800 dark:bg-dark-card">
         <a href="/dashboard" class="flex h-20 items-center gap-3 border-b border-zinc-100 px-6 font-bold tracking-tight dark:border-zinc-800">
             <span class="grid size-9 place-items-center rounded-xl bg-primary text-lg text-white" aria-hidden="true">L</span>

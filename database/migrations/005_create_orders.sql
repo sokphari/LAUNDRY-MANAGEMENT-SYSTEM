@@ -1,0 +1,22 @@
+CREATE TABLE orders (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_code VARCHAR(30) NOT NULL,
+    customer_id BIGINT UNSIGNED NOT NULL,
+    created_by BIGINT UNSIGNED NOT NULL,
+    received_at DATETIME NOT NULL,
+    expected_pickup_at DATETIME NOT NULL,
+    picked_up_at DATETIME NULL,
+    status ENUM('received', 'processing', 'ready', 'collected', 'cancelled') NOT NULL DEFAULT 'received',
+    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    discount_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+    notes TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY orders_order_code_unique (order_code),
+    KEY orders_customer_received_index (customer_id, received_at),
+    KEY orders_status_pickup_index (status, expected_pickup_at),
+    CONSTRAINT orders_customer_fk FOREIGN KEY (customer_id) REFERENCES customers (id) ON DELETE RESTRICT,
+    CONSTRAINT orders_created_by_fk FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

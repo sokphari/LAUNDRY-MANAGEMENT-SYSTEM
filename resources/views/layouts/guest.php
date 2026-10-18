@@ -7,7 +7,7 @@
     <script src="/assets/js/theme.js"></script>
     <link rel="stylesheet" href="/assets/css/app.css">
 </head>
-<body class="min-h-screen bg-[#F8F7FC] text-zinc-900 dark:bg-dark-base dark:text-white">
+<body class="min-h-screen bg-[#F8FAFC] text-zinc-900 dark:bg-dark-base dark:text-white">
     <div class="fixed right-5 top-5 z-10">
         <?php require dirname(__DIR__) . '/components/theme-toggle.php'; ?>
     </div>

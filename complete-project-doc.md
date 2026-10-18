@@ -820,10 +820,11 @@ laundry-management/
 │   │   ├── 001_create_users.sql
 │   │   ├── 002_create_customers.sql
 │   │   ├── 003_create_services.sql
-│   │   ├── 004_create_orders.sql
-│   │   ├── 005_create_order_items.sql
-│   │   ├── 006_create_payments.sql
-│   │   └── 007_create_order_status_logs.sql
+│   │   ├── 004_service_billing_unit_unique.sql
+│   │   ├── 005_create_orders.sql
+│   │   ├── 006_create_order_items.sql
+│   │   ├── 007_create_order_status_logs.sql
+│   │   └── 008_create_payments.sql
 │   └── seeds/
 │       └── demo_data.sql
 ├── public/                       # Only publicly served directory

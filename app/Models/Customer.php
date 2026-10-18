@@ -8,6 +8,12 @@ use PDO;
 
 final class Customer
 {
+    /** @return list<array{id: int|string, name: string, phone: string}> */
+    public static function activeOptions(PDO $database): array
+    {
+        return $database->query('SELECT id, name, phone FROM customers WHERE is_active = 1 ORDER BY name LIMIT 500')->fetchAll();
+    }
+
     /** @return list<array<string, mixed>> */
     public static function all(PDO $database): array
     {

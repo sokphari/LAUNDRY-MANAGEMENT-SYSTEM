@@ -15,13 +15,13 @@
             <div class="grid gap-4 sm:grid-cols-2">
             <div>
                 <label for="name" class="mb-2 block text-sm font-medium">Customer name <span class="text-red-600">*</span></label>
-                <input id="name" name="name" type="text" required maxlength="120" autocomplete="name" value="<?= e($customer['name'] ?? '') ?>"
+                <input id="name" name="name" type="text" required maxlength="120" autocomplete="name" placeholder="e.g. Sokha Chan" value="<?= e($customer['name'] ?? '') ?>"
                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 <?= isset($errors['name']) ? 'border-red-500' : '' ?>">
                 <?php if (isset($errors['name'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['name']) ?></p><?php endif; ?>
             </div>
             <div>
                 <label for="phone" class="mb-2 block text-sm font-medium">Phone number <span class="text-red-600">*</span></label>
-                <input id="phone" name="phone" type="tel" inputmode="tel" required maxlength="20" autocomplete="tel" value="<?= e($customer['phone'] ?? '') ?>"
+                <input id="phone" name="phone" type="tel" inputmode="tel" required maxlength="20" autocomplete="tel" placeholder="e.g. 012 345 678" value="<?= e($customer['phone'] ?? '') ?>"
                        class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 <?= isset($errors['phone']) ? 'border-red-500' : '' ?>">
                 <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Stored as text so leading zeroes are preserved.</p>
                 <?php if (isset($errors['phone'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['phone']) ?></p><?php endif; ?>
@@ -29,13 +29,13 @@
             </div>
             <div>
                 <label for="address" class="mb-2 block text-sm font-medium">Address <span class="text-zinc-400">(optional)</span></label>
-                <textarea id="address" name="address" rows="2" maxlength="5000" autocomplete="street-address"
+                <textarea id="address" name="address" rows="2" maxlength="5000" autocomplete="street-address" placeholder="e.g. Street 123, Phnom Penh"
                           class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 <?= isset($errors['address']) ? 'border-red-500' : '' ?>"><?= e($customer['address'] ?? '') ?></textarea>
                 <?php if (isset($errors['address'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['address']) ?></p><?php endif; ?>
             </div>
             <div>
                 <label for="notes" class="mb-2 block text-sm font-medium">Notes <span class="text-zinc-400">(optional)</span></label>
-                <textarea id="notes" name="notes" rows="3" maxlength="5000"
+                <textarea id="notes" name="notes" rows="3" maxlength="5000" placeholder="Any helpful notes about this customer…"
                           class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-700 dark:bg-zinc-900 <?= isset($errors['notes']) ? 'border-red-500' : '' ?>"><?= e($customer['notes'] ?? '') ?></textarea>
                 <?php if (isset($errors['notes'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['notes']) ?></p><?php endif; ?>
             </div>
