@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e($title ?? 'Laundry Management System') ?></title>
     <script src="/assets/js/theme.js"></script>
+    <script src="/assets/js/auth.js" defer></script>
     <link rel="stylesheet" href="/assets/css/app.css">
 </head>
 <body class="min-h-screen bg-[#F8FAFC] text-zinc-900 dark:bg-dark-base dark:text-white">

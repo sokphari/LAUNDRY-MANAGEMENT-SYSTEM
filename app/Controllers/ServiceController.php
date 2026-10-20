@@ -9,7 +9,6 @@ use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\View;
 use App\Models\Service;
-use App\Middleware\RequireRole;
 use App\Services\AuditLog as AuditLogService;
 use PDOException;
 
@@ -59,11 +58,6 @@ final class ServiceController
     {
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
-        if ((Auth::user()['role'] ?? null) !== 'admin') {
-            http_response_code(403);
-            echo json_encode(['error' => 'Only administrators can change service status.']);
-            return;
-        }
         if (!Csrf::verify(isset($_POST['_csrf_token']) && is_string($_POST['_csrf_token']) ? $_POST['_csrf_token'] : null)) {
             http_response_code(419);
             echo json_encode(['error' => 'Your session expired. Reload the page and try again.']);
@@ -109,14 +103,12 @@ final class ServiceController
 
     public static function create(): void
     {
-        if (!RequireRole::run(['admin'])) return;
         self::renderForm('Add Service', ['name' => '', 'service_type' => '', 'custom_name' => '', 'description' => '', 'price' => '', 'billing_unit' => ''], [], '/services/create');
     }
 
     /** @param array<string, mixed> $databaseConfig */
     public static function store(array $databaseConfig): void
     {
-        if (!RequireRole::run(['admin'])) return;
         if (!self::verifyCsrf()) return;
         $data = self::input();
         $errors = self::validate($data);
@@ -158,7 +150,6 @@ final class ServiceController
     /** @param array<string, mixed> $databaseConfig */
     public static function edit(string $id, array $databaseConfig): void
     {
-        if (!RequireRole::run(['admin'])) return;
         $service = self::find($id, $databaseConfig);
         if ($service !== null) self::renderForm('Edit Service', $service, [], '/services/' . (int) $id . '/edit');
     }
@@ -166,7 +157,6 @@ final class ServiceController
     /** @param array<string, mixed> $databaseConfig */
     public static function update(string $id, array $databaseConfig): void
     {
-        if (!RequireRole::run(['admin'])) return;
         if (!self::verifyCsrf()) return;
         $service = self::find($id, $databaseConfig);
         if ($service === null) return;
@@ -222,7 +212,6 @@ final class ServiceController
     /** @param array<string, mixed> $databaseConfig */
     public static function deactivate(string $id, array $databaseConfig): void
     {
-        if (!RequireRole::run(['admin'])) return;
         if (!self::verifyCsrf()) return;
         $service = self::find($id, $databaseConfig);
         if ($service === null) return;

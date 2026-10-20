@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN auth_version INT UNSIGNED NOT NULL DEFAULT 0 AFTER is_active;

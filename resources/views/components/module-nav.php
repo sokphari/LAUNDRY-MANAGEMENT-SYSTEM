@@ -1,19 +1,20 @@
 <?php
 $moduleItems = [
-    ['label' => 'Dashboard', 'path' => '/dashboard', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'dashboard'],
-    ['label' => 'Customers', 'path' => '/customers', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'customers'],
-    ['label' => 'Services', 'path' => '/services', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'services'],
-    ['label' => 'Orders', 'path' => '/orders', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'orders'],
-    ['label' => 'Audit Logs', 'path' => '/audit-logs', 'available' => true, 'roles' => ['admin'], 'icon' => 'audit'],
-    ['label' => 'Payments', 'path' => '/payments', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'payments'],
-    ['label' => 'Reports', 'path' => '/reports', 'available' => true, 'roles' => ['admin'], 'icon' => 'reports'],
-    ['label' => 'Users', 'path' => '/users', 'available' => false, 'roles' => ['admin'], 'icon' => 'users'],
+    ['label' => 'Dashboard', 'path' => '/dashboard', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'dashboard.view', 'icon' => 'dashboard'],
+    ['label' => 'Customers', 'path' => '/customers', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'customers.view', 'icon' => 'customers'],
+    ['label' => 'Services', 'path' => '/services', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'services.view', 'icon' => 'services'],
+    ['label' => 'Orders', 'path' => '/orders', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'orders.view', 'icon' => 'orders'],
+    ['label' => 'Audit Logs', 'path' => '/audit-logs', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'audit_logs.view', 'icon' => 'audit'],
+    ['label' => 'Payments', 'path' => '/payments', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'payments.view', 'icon' => 'payments'],
+    ['label' => 'Reports', 'path' => '/reports', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'reports.view', 'icon' => 'reports'],
+    ['label' => 'Users', 'path' => '/users', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'users.manage', 'icon' => 'users'],
 ];
 $currentRole = $user['role'] ?? '';
 $navInstance = ($navInstance ?? 0) + 1;
 $customersActive = $currentPath === '/customers' || str_starts_with($currentPath, '/customers/');
 $servicesActive = $currentPath === '/services' || str_starts_with($currentPath, '/services/');
 $ordersActive = $currentPath === '/orders' || str_starts_with($currentPath, '/orders/');
+$usersActive = $currentPath === '/users' || str_starts_with($currentPath, '/users/') || $currentPath === '/roles';
 $iconMarkup = [
     'dashboard' => '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
     'customers' => '<path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -27,10 +28,10 @@ $iconMarkup = [
 ?>
 <nav aria-label="Modules" class="mt-3 space-y-1">
     <?php foreach ($moduleItems as $item): ?>
-        <?php if (in_array($currentRole, $item['roles'], true)): ?>
+        <?php if (in_array($currentRole, $item['roles'], true) && (!isset($item['permission']) || in_array($item['permission'], $user['permissions'] ?? [], true) || ($item['label'] === 'Users' && in_array('roles.manage', $user['permissions'] ?? [], true)))): ?>
             <?php
-            $active = $item['label'] === 'Customers' ? $customersActive : ($item['label'] === 'Services' ? $servicesActive : ($item['label'] === 'Orders' ? $ordersActive : ($currentPath === $item['path'] || ($item['path'] !== '/dashboard' && str_starts_with($currentPath, $item['path'] . '/')))));
-            $hasSubmenu = in_array($item['label'], ['Customers', 'Services', 'Orders'], true);
+            $active = $item['label'] === 'Customers' ? $customersActive : ($item['label'] === 'Services' ? $servicesActive : ($item['label'] === 'Orders' ? $ordersActive : ($item['label'] === 'Users' ? $usersActive : ($currentPath === $item['path'] || ($item['path'] !== '/dashboard' && str_starts_with($currentPath, $item['path'] . '/'))))));
+            $hasSubmenu = in_array($item['label'], ['Customers', 'Services', 'Orders', 'Users'], true);
             $submenuId = strtolower($item['label']) . '-submenu-' . $navInstance;
             $linkClasses = 'module-link flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ' . ($active ? 'bg-violet-50 text-primary dark:bg-violet-950/50 dark:text-violet-300' : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white');
             ?>
@@ -51,7 +52,10 @@ $iconMarkup = [
                 <?php if ($hasSubmenu): ?>
                     <div id="<?= e($submenuId) ?>" class="js-module-submenu overflow-hidden transition-[max-height,opacity] duration-300 ease-in-out <?= $active ? 'customer-submenu-open' : '' ?>" <?= $active ? '' : 'hidden' ?>>
                         <div class="ml-6 mt-1 space-y-1 border-l border-zinc-200 py-1 pl-3 dark:border-zinc-700">
-                            <?php if ($item['label'] === 'Customers'): ?>
+                            <?php if ($item['label'] === 'Users'): ?>
+                                <?php if (in_array('users.manage', $user['permissions'] ?? [], true)): ?><a href="/users" <?= $currentPath === '/users' ? 'aria-current="page"' : '' ?> class="block rounded-md px-3 py-2 text-sm <?= $currentPath === '/users' ? 'font-semibold text-primary' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white' ?>">User accounts</a><?php endif; ?>
+                                <?php if (in_array('roles.manage', $user['permissions'] ?? [], true)): ?><a href="/roles" <?= $currentPath === '/roles' ? 'aria-current="page"' : '' ?> class="block rounded-md px-3 py-2 text-sm <?= $currentPath === '/roles' ? 'font-semibold text-primary' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white' ?>">Roles &amp; permissions</a><?php endif; ?>
+                            <?php elseif ($item['label'] === 'Customers'): ?>
                                 <a href="/customers" <?= $currentPath === '/customers' ? 'aria-current="page"' : '' ?> class="block rounded-md px-3 py-2 text-sm <?= $currentPath === '/customers' ? 'font-semibold text-primary' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white' ?>">View customers</a>
                                 <a href="/customers/create" <?= $currentPath === '/customers/create' ? 'aria-current="page"' : '' ?> class="block rounded-md px-3 py-2 text-sm <?= $currentPath === '/customers/create' ? 'font-semibold text-primary' : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white' ?>">Create customer</a>
                             <?php elseif ($item['label'] === 'Services'): ?>

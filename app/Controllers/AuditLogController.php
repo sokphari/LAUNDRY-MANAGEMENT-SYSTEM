@@ -30,15 +30,25 @@ final class AuditLogController
         'customer.created' => 'Customer Created',
         'customer.deactivated' => 'Customer Deactivated',
         'refund.completed' => 'Refund Completed',
+        'auth.login' => 'User Signed In',
+        'auth.login_failed' => 'Failed Sign In',
+        'auth.logout' => 'User Signed Out',
+        'user.created' => 'User Created',
+        'user.updated' => 'User Updated',
+        'user.role_changed' => 'User Role Changed',
+        'user.enabled' => 'User Enabled',
+        'user.disabled' => 'User Disabled',
+        'user.password_changed' => 'Password Changed',
+        'user.password_reset' => 'Password Reset',
+        'user.permissions_updated' => 'User Permissions Updated',
+        'role.permissions_updated' => 'Role Permissions Updated',
     ];
 
-    private const MODULES = ['order' => 'Orders', 'payment' => 'Payments', 'service' => 'Services', 'customer' => 'Customers', 'refund' => 'Refunds'];
+    private const MODULES = ['order' => 'Orders', 'payment' => 'Payments', 'service' => 'Services', 'customer' => 'Customers', 'refund' => 'Refunds', 'auth' => 'Authentication', 'user' => 'Users', 'role' => 'Roles'];
 
     /** @param array<string, mixed> $databaseConfig */
     public static function index(array $databaseConfig): void
     {
-        if ((Auth::user()['role'] ?? '') !== 'admin') { http_response_code(403); echo 'You do not have permission to view audit logs.'; return; }
-
         $query = isset($_GET['q']) && is_string($_GET['q']) ? trim($_GET['q']) : '';
         $requestedAction = isset($_GET['action']) && is_string($_GET['action']) ? $_GET['action'] : '';
         $action = array_key_exists($requestedAction, self::ACTIONS) ? $requestedAction : '';
@@ -119,9 +129,10 @@ final class AuditLogController
     public static function actionClass(string $action): string
     {
         if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created', 'service.activated'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        if (in_array($action, ['auth.login', 'user.created', 'user.enabled'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if ($action === 'order.status_changed') return 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
-        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
-        if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated', 'user.updated', 'user.role_changed', 'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated', 'auth.login_failed', 'user.disabled'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
         return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
     }
 }

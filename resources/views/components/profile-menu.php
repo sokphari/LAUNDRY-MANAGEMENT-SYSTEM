@@ -20,9 +20,7 @@ $profileInitial = strtoupper(substr($profileName, 0, 1));
             <p class="mt-1 text-xs capitalize text-zinc-500 dark:text-zinc-400"><?= e($user['role'] ?? '') ?></p>
         </div>
         <div class="border-b border-zinc-200 py-1 dark:border-zinc-700">
-            <span aria-disabled="true" title="Account security settings are not available yet" class="flex cursor-not-allowed items-center justify-between px-4 py-2.5 text-sm font-medium text-zinc-400 dark:text-zinc-500">
-                Account Security <span class="text-[10px] font-semibold uppercase tracking-wide">Soon</span>
-            </span>
+            <a href="/account/security" class="block px-4 py-2.5 text-sm font-medium hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary dark:hover:bg-zinc-800">Account Security</a>
         </div>
         <form method="post" action="/logout" class="p-1">
             <input type="hidden" name="_csrf_token" value="<?= e($csrfToken ?? '') ?>">

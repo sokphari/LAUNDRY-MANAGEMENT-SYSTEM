@@ -1,4 +1,4 @@
-<?php $canManagePayments = ($user['role'] ?? '') === 'admin'; ?>
+<?php $canManagePayments = in_array('payments.refund', $user['permissions'] ?? [], true); ?>
 <?php if ($payments !== []): ?>
     <div class="mt-5 overflow-x-auto">
         <table class="w-full min-w-[980px] text-left text-sm">

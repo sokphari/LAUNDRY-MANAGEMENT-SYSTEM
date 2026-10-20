@@ -9,6 +9,8 @@ use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\View;
 use App\Models\User;
+use App\Services\AuditLog;
+use App\Services\LoginRateLimiter;
 use PDOException;
 
 final class AuthController
@@ -47,7 +49,14 @@ final class AuthController
         }
 
         try {
-            $user = User::findActiveByLogin(Database::connect($databaseConfig), $login);
+            $database = Database::connect($databaseConfig);
+            $ip = self::clientIp();
+            $blockedFor = LoginRateLimiter::blockedFor($database, $login, $ip);
+            if ($blockedFor > 0) {
+                self::redirectWithError('Too many sign-in attempts. Try again in ' . max(1, (int)ceil($blockedFor / 60)) . ' minute(s).', $login);
+                return;
+            }
+            $user = User::findActiveByLogin($database, $login);
         } catch (PDOException $exception) {
             $logMessage = sprintf(
                 "[%s] [authentication] Database connection/query failed: %s\n",
@@ -60,8 +69,26 @@ final class AuthController
         }
 
         if ($user === false || !password_verify($password, $user['password_hash'])) {
+            if ($user === false) password_verify($password, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
+            try {
+                LoginRateLimiter::recordFailure($database, $login, $ip);
+                AuditLog::record($database, null, 'auth.login_failed', 'auth', null, 'Failed sign-in attempt', [
+                    'login_identifier' => mb_substr($login, 0, 150),
+                    'target_user_id' => $user === false ? null : (int)$user['id'],
+                    'ip' => $ip,
+                ]);
+            } catch (PDOException $exception) {
+                error_log('[authentication] Could not record failed sign-in: ' . $exception->getMessage());
+            }
             self::redirectWithError('The username/email or password is incorrect.', $login);
             return;
+        }
+
+        try {
+            LoginRateLimiter::clear($database, $login, $ip);
+            AuditLog::record($database, (int)$user['id'], 'auth.login', 'auth', (int)$user['id'], 'User signed in', ['ip' => $ip]);
+        } catch (PDOException $exception) {
+            error_log('[authentication] Could not record successful sign-in: ' . $exception->getMessage());
         }
 
         Auth::login([
@@ -70,12 +97,14 @@ final class AuthController
             'username' => $user['username'],
             'email' => $user['email'],
             'role' => $user['role'],
+            'auth_version' => (int)$user['auth_version'],
         ]);
         unset($_SESSION['_csrf_token']);
         header('Location: /dashboard', true, 302);
     }
 
-    public static function logout(): void
+    /** @param array<string, mixed> $databaseConfig */
+    public static function logout(array $databaseConfig): void
     {
         if (!Csrf::verify($_POST['_csrf_token'] ?? null)) {
             http_response_code(419);
@@ -83,6 +112,14 @@ final class AuthController
             return;
         }
 
+        $user = Auth::user();
+        if ($user !== null) {
+            try {
+                AuditLog::record(Database::connect($databaseConfig), (int)$user['id'], 'auth.logout', 'auth', (int)$user['id'], 'User signed out', ['ip' => self::clientIp()]);
+            } catch (PDOException $exception) {
+                error_log('[authentication] Could not record sign-out: ' . $exception->getMessage());
+            }
+        }
         Auth::logout();
         header('Location: /login', true, 302);
     }
@@ -92,5 +129,11 @@ final class AuthController
         $_SESSION['login_error'] = $message;
         $_SESSION['old_login'] = $login;
         header('Location: /login', true, 302);
+    }
+
+    private static function clientIp(): string
+    {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        return filter_var($ip, FILTER_VALIDATE_IP) !== false ? $ip : 'unknown';
     }
 }
