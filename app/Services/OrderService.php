@@ -234,7 +234,7 @@ final class OrderService
             $refundableBefore = max(0, round((float) $payment['amount'] - $refundedBefore, 2));
             $refundAmount = round((float) $amount, 2);
             if ($refundAmount > $refundableBefore) {
-                throw new InvalidOrderException(['refund' => 'Refund cannot exceed the unrefunded amount of this payment (' . number_format($refundableBefore, 2) . ' KHR).']);
+                throw new InvalidOrderException(['refund' => 'Refund cannot exceed the unrefunded amount of this payment (' . format_khr($refundableBefore) . ' KHR).']);
             }
 
             $insert = $database->prepare('INSERT INTO order_payment_refunds (payment_id, refunded_by, amount, refund_method, reason) VALUES (:payment_id, :refunded_by, :amount, :refund_method, :reason)');
@@ -242,7 +242,7 @@ final class OrderService
             $refundId = (int) $database->lastInsertId();
             $refundedAfter = round($refundedBefore + $refundAmount, 2);
             $refundableAfter = max(0, round((float) $payment['amount'] - $refundedAfter, 2));
-            AuditLog::record($database, $userId, 'refund.completed', 'refund', $refundId, 'Refunded ' . number_format($refundAmount, 2) . ' KHR for order ' . $order['order_code'], [
+            AuditLog::record($database, $userId, 'refund.completed', 'refund', $refundId, 'Refunded ' . format_khr($refundAmount) . ' KHR for order ' . $order['order_code'], [
                 'order_id' => $orderId,
                 'payment_id' => $paymentId,
                 'payment_method' => $payment['method'],

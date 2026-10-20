@@ -8,8 +8,11 @@ use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
 use App\Controllers\ServiceController;
 use App\Controllers\OrderController;
+use App\Controllers\PaymentController;
+use App\Controllers\ReportController;
 use App\Core\Auth;
 use App\Middleware\RequireAuth;
+use App\Middleware\RequireRole;
 
 $router->get('/', static function (): void {
     header('Location: ' . (Auth::check() ? '/dashboard' : '/login'), true, 302);
@@ -29,14 +32,31 @@ $router->post('/logout', static function (): void {
     }
 });
 
-$router->get('/dashboard', static function (): void {
+$router->get('/dashboard', static function () use ($databaseConfig): void {
     if (RequireAuth::run()) {
-        DashboardController::index();
+        DashboardController::index($databaseConfig);
     }
 });
 
 $router->get('/audit-logs', static function () use ($databaseConfig): void {
     if (RequireAuth::run()) AuditLogController::index($databaseConfig);
+});
+
+$router->get('/payments', static function () use ($databaseConfig): void {
+    if (RequireAuth::run()) PaymentController::index($databaseConfig);
+});
+$router->get('/payments/search', static function () use ($databaseConfig): void {
+    if (RequireAuth::run()) PaymentController::index($databaseConfig);
+});
+$router->get('/payments/export', static function () use ($databaseConfig): void {
+    if (RequireAuth::run()) PaymentController::export($databaseConfig);
+});
+
+$router->get('/reports', static function () use ($databaseConfig): void {
+    if (RequireAuth::run() && RequireRole::run(['admin'])) ReportController::index($databaseConfig);
+});
+$router->get('/reports/export', static function () use ($databaseConfig): void {
+    if (RequireAuth::run() && RequireRole::run(['admin'])) ReportController::export($databaseConfig);
 });
 
 $router->get('/customers', static function () use ($databaseConfig): void {
@@ -131,10 +151,10 @@ $router->post('/orders/{id}/payments', static function (string $id) use ($databa
     if (RequireAuth::run()) OrderController::recordPayment($id, $databaseConfig);
 });
 $router->post('/orders/{id}/payments/{paymentId}/correct', static function (string $id, string $paymentId) use ($databaseConfig): void {
-    if (RequireAuth::run()) OrderController::correctPayment($id, $paymentId, $databaseConfig);
+    if (RequireAuth::run() && RequireRole::run(['admin'])) OrderController::correctPayment($id, $paymentId, $databaseConfig);
 });
 $router->post('/orders/{id}/payments/{paymentId}/refund', static function (string $id, string $paymentId) use ($databaseConfig): void {
-    if (RequireAuth::run()) OrderController::refundPayment($id, $paymentId, $databaseConfig);
+    if (RequireAuth::run() && RequireRole::run(['admin'])) OrderController::refundPayment($id, $paymentId, $databaseConfig);
 });
 $router->get('/orders/{id}/edit', static function (string $id) use ($databaseConfig): void {
     if (RequireAuth::run()) OrderController::edit($id, $databaseConfig);

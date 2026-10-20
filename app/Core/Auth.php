@@ -6,7 +6,7 @@ namespace App\Core;
 
 final class Auth
 {
-    /** @param array{id: int|string, full_name: string, username: string, role: string} $user */
+    /** @param array{id: int|string, full_name: string, username: string, role: string, email?: ?string} $user */
     public static function login(array $user): void
     {
         session_regenerate_id(true);
@@ -37,7 +37,7 @@ final class Auth
         return isset($_SESSION['user']['id'], $_SESSION['user']['role']);
     }
 
-    /** @return array{id: int|string, full_name: string, username: string, role: string}|null */
+    /** @return array{id: int|string, full_name: string, username: string, role: string, email?: ?string}|null */
     public static function user(): ?array
     {
         return self::check() ? $_SESSION['user'] : null;

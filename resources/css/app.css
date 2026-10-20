@@ -15,6 +15,47 @@
   -moz-appearance: textfield;
 }
 
+@media (min-width: 768px) {
+  body.sidebar-collapsed .app-sidebar {
+    width: 5rem;
+  }
+
+  body.sidebar-collapsed #app-shell {
+    padding-left: 5rem;
+  }
+
+  body.sidebar-collapsed .app-sidebar .module-label,
+  body.sidebar-collapsed .app-sidebar .sidebar-section-title,
+  body.sidebar-collapsed .app-sidebar .module-group-chevron,
+  body.sidebar-collapsed .app-sidebar .js-module-submenu {
+    display: none;
+  }
+
+  body.sidebar-collapsed .app-sidebar > a {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  body.sidebar-collapsed .app-sidebar .module-row {
+    justify-content: center;
+  }
+
+  body.sidebar-collapsed .app-sidebar .module-link {
+    flex: none;
+    width: auto;
+    justify-content: center;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+  }
+}
+
+@media (max-width: 767px) {
+  .app-sidebar.sidebar-open {
+    translate: 0;
+  }
+}
+
 #orders-table th:nth-child(6),
 #orders-table td:nth-child(6) {
   display: none;
@@ -228,6 +269,14 @@
 .customer-submenu-open {
   max-height: 10rem;
   opacity: 1;
+}
+
+.profile-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.profile-menu > summary::marker {
+  content: "";
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -17,7 +17,8 @@
     <p id="audit-status" class="sr-only" role="status" aria-live="polite"></p>
 
     <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
-        <div class="overflow-x-auto"><table class="w-full min-w-[900px] text-left text-sm">
+        <p class="px-4 pt-3 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden">Swipe horizontally to see audit details.</p>
+        <div class="overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" role="region" aria-label="Audit log records" tabindex="0"><table class="w-full min-w-[900px] text-left text-sm">
             <thead class="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3">Date &amp; time</th><th class="px-5 py-3">Staff member</th><th class="px-5 py-3">Activity</th><th class="px-5 py-3">Record</th><th class="px-5 py-3">Details</th></tr></thead>
             <tbody id="audit-log-rows" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 <?php foreach ($logs as $log): ?>
@@ -25,11 +26,11 @@
                     <tr class="align-top">
                         <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e(date('d M Y, H:i:s', strtotime((string) $log['created_at']))) ?></td>
                         <td class="px-5 py-4"><?= e($log['username'] ?? 'Deleted user') ?></td>
-                        <td class="px-5 py-4"><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold <?= e(\App\Controllers\AuditLogController::actionClass((string) $log['action'])) ?>"><?= e($actions[$log['action']] ?? ucwords(str_replace(['.', '_'], ' ', (string) $log['action']))) ?></span></td>
+                        <td class="px-5 py-4"><span class="inline-flex rounded-full px-3 py-1.5 text-xs font-semibold leading-4 <?= e(\App\Controllers\AuditLogController::actionClass((string) $log['action'])) ?>"><?= e($actions[$log['action']] ?? ucwords(str_replace(['.', '_'], ' ', (string) $log['action']))) ?></span></td>
                         <td class="px-5 py-4"><?php if ($linkedOrderId > 0): ?><a href="/orders/<?= $linkedOrderId ?>" class="font-medium text-primary hover:underline"><?= e(in_array($log['entity_type'], ['payment', 'refund'], true) ? 'Order #' . $linkedOrderId . ' · ' . ucfirst((string) $log['entity_type']) . ' #' . (int) $log['entity_id'] : ucfirst((string) $log['entity_type']) . ' #' . (int) $log['entity_id']) ?></a><?php else: ?><?= e(ucfirst((string) $log['entity_type'])) ?><?= $log['entity_id'] ? ' #' . (int) $log['entity_id'] : '' ?><?php endif; ?></td>
                         <td class="max-w-xl px-5 py-4"><p class="font-medium"><?= e($log['summary']) ?></p><button id="audit-toggle-<?= (int) $log['id'] ?>" type="button" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" data-audit-toggle aria-expanded="false" aria-controls="audit-details-<?= (int) $log['id'] ?>" data-audit-id="<?= (int) $log['id'] ?>" data-audit-actor="<?= e($log['username'] ?? 'Deleted user') ?>" data-audit-time="<?= e(date('d M Y, H:i:s', strtotime((string) $log['created_at']))) ?>" data-audit-module="<?= e(ucfirst((string) $log['entity_type'])) ?>" data-audit-action="<?= e($actions[$log['action']] ?? ucwords(str_replace(['.', '_'], ' ', (string) $log['action']))) ?>" data-audit-record="<?= e(ucfirst((string) $log['entity_type']) . ($log['entity_id'] ? ' #' . (int) $log['entity_id'] : '')) ?>" data-audit-data="<?= e(json_encode(is_array($detailData) ? $detailData : [], JSON_INVALID_UTF8_SUBSTITUTE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?: '{}') ?>">View Change Details</button></td>
                     </tr>
-                    <tr id="audit-details-<?= (int) $log['id'] ?>" hidden><td colspan="5" class="px-4 pb-4"><div data-audit-panel class="rounded-xl border border-violet-200 bg-violet-50/70 p-4 text-zinc-900 dark:border-violet-900 dark:bg-zinc-950 dark:text-zinc-100"></div></td></tr>
+                    <tr id="audit-details-<?= (int) $log['id'] ?>" hidden><td colspan="5" class="px-2 pb-3 sm:px-4 sm:pb-4"><div data-audit-panel class="rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-zinc-900 dark:border-violet-900 dark:bg-zinc-950 dark:text-zinc-100 sm:p-4"></div></td></tr>
                 <?php endforeach; ?>
                 <?php if ($logs === []): ?><tr><td colspan="5" class="px-5 py-12 text-center text-zinc-500 dark:text-zinc-400">No audit activity found.</td></tr><?php endif; ?>
             </tbody>

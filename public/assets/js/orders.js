@@ -284,10 +284,10 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       row.append(customerCell);
       appendCell(row, order.received_display, 'whitespace-nowrap px-5 py-4');
       appendCell(row, order.pickup_display, 'whitespace-nowrap px-5 py-4');
-      appendCell(row, `${Number(order.total_amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KHR`, 'whitespace-nowrap px-5 py-4 font-semibold');
+      appendCell(row, `${Number(order.total_amount).toLocaleString('en-US', { maximumFractionDigits: 2 })} KHR`, 'whitespace-nowrap px-5 py-4 font-semibold');
       const paidAmount = Number(order.paid_amount || 0);
       const balanceAmount = Math.max(0, Number(order.total_amount || 0) - paidAmount);
-      const formatMoney = (amount) => `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KHR`;
+      const formatMoney = (amount) => `${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })} KHR`;
       appendCell(row, formatMoney(paidAmount), 'whitespace-nowrap px-5 py-4');
       const balanceCell = appendCell(row, '', 'whitespace-nowrap px-5 py-4');
       const balanceText = document.createElement('div');
@@ -501,7 +501,7 @@ document.addEventListener('click', (event) => {
     amountInput.max = paymentButton.dataset.balance;
     amountInput.value = '';
     dialog.querySelector('[data-payment-order-code]').textContent = paymentButton.dataset.orderCode || '';
-    dialog.querySelector('[data-payment-balance]').textContent = `${Number(paymentButton.dataset.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KHR`;
+    dialog.querySelector('[data-payment-balance]').textContent = `${Number(paymentButton.dataset.balance).toLocaleString('en-US', { maximumFractionDigits: 2 })} KHR`;
     form.querySelector('[name="_return_to"]').value = `${location.pathname}${location.search}`;
     dialog.showModal();
     amountInput.focus();

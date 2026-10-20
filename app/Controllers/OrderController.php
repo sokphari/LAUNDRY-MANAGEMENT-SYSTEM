@@ -119,7 +119,23 @@ final class OrderController
             self::log($exception); http_response_code(500); echo 'Order details are temporarily unavailable.'; return;
         }
         if ($data === false) { http_response_code(404); echo '404 Not Found'; return; }
-        View::render('orders/show', self::shared() + $data + ['title' => 'Order ' . $data['order']['order_code'], 'flash' => self::takeFlash(), 'allowedStatuses' => self::nextStatuses((string) $data['order']['status'])]);
+        $activePayments = array_values(array_filter($data['payments'], static fn (array $payment): bool => empty($payment['voided_at'])));
+        $receiptPayment = $activePayments[0] ?? null;
+        if (array_key_exists('payment_id', $_GET)) {
+            $requestedPaymentId = filter_var($_GET['payment_id'], FILTER_VALIDATE_INT);
+            if (!is_int($requestedPaymentId) || $requestedPaymentId < 1) { http_response_code(404); echo 'Payment not found.'; return; }
+            $receiptPayment = null;
+            foreach ($data['payments'] as $payment) {
+                if ((int) $payment['id'] === $requestedPaymentId) { $receiptPayment = $payment; break; }
+            }
+            if ($receiptPayment === null) { http_response_code(404); echo 'Payment not found.'; return; }
+        }
+        if (self::getString('print') === 'payment' && ($receiptPayment === null || !empty($receiptPayment['voided_at']))) {
+            http_response_code(410); echo 'A corrected payment does not have a valid receipt.'; return;
+        }
+        $returnUrl = self::getString('return');
+        if (!preg_match('~^/payments(?:\?|$)~', $returnUrl) || str_contains($returnUrl, '\\') || str_contains($returnUrl, "\r") || str_contains($returnUrl, "\n")) { $returnUrl = '/orders'; }
+        View::render('orders/show', self::shared() + $data + ['receiptPayment' => $receiptPayment, 'returnUrl' => $returnUrl, 'title' => 'Order ' . $data['order']['order_code'], 'flash' => self::takeFlash(), 'allowedStatuses' => self::nextStatuses((string) $data['order']['status'])]);
     }
 
     /** @param array<string, mixed> $databaseConfig */

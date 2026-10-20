@@ -35,7 +35,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
   const formatFieldValue = (field, value) => {
     const isMoney = /(price|amount|total|subtotal|deposit|refundable)$/.test(field);
     const formatted = isMoney && value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))
-      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(Number(value))
+      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value))
       : formatValue(value);
     return isMoney && value !== null && value !== undefined && value !== '' ? `${formatted} KHR` : formatted;
   };
@@ -116,9 +116,9 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       heading.className = 'text-sm font-semibold';
       heading.textContent = 'Change comparison';
       const scroller = document.createElement('div');
-      scroller.className = 'overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800';
+      scroller.className = 'overflow-x-auto overscroll-x-contain rounded-lg border border-zinc-200 dark:border-zinc-800';
       const table = document.createElement('table');
-      table.className = 'w-full min-w-[520px] text-left text-sm';
+      table.className = 'w-full min-w-[480px] text-left text-sm';
       const thead = document.createElement('thead');
       thead.className = 'bg-white/70 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400';
       const headRow = document.createElement('tr');
@@ -137,7 +137,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
         [field, before, after].forEach((value, index) => {
           const cell = document.createElement(index === 0 ? 'th' : 'td');
           if (index === 0) cell.scope = 'row';
-          cell.className = 'whitespace-pre-line px-3 py-2 align-top';
+          cell.className = 'whitespace-pre-line break-words px-3 py-2 align-top';
           cell.textContent = value;
           row.append(cell);
         });
@@ -170,10 +170,10 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     detailRow.hidden = true;
     const cell = document.createElement('td');
     cell.colSpan = 5;
-    cell.className = 'px-4 pb-4';
+    cell.className = 'px-2 pb-3 sm:px-4 sm:pb-4';
     const panel = document.createElement('div');
     panel.dataset.auditPanel = '';
-    panel.className = 'rounded-xl border border-violet-200 bg-violet-50/70 p-4 text-zinc-900 dark:border-violet-900 dark:bg-zinc-950 dark:text-zinc-100';
+    panel.className = 'rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-zinc-900 dark:border-violet-900 dark:bg-zinc-950 dark:text-zinc-100 sm:p-4';
     cell.append(panel);
     detailRow.append(cell);
     button.id = `audit-toggle-${log.id}`;
@@ -213,7 +213,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       const actionCell = document.createElement('td');
       actionCell.className = 'px-5 py-4';
       const badge = document.createElement('span');
-      badge.className = `inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${log.action_class || 'bg-zinc-800 text-zinc-300'}`;
+      badge.className = `inline-flex rounded-full px-3 py-1.5 text-xs font-semibold leading-4 ${log.action_class || 'bg-zinc-800 text-zinc-300'}`;
       badge.textContent = log.action_label || log.action;
       actionCell.append(badge);
       row.append(actionCell);

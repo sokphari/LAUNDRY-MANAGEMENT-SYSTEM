@@ -68,6 +68,7 @@ final class AuthController
             'id' => $user['id'],
             'full_name' => $user['full_name'],
             'username' => $user['username'],
+            'email' => $user['email'],
             'role' => $user['role'],
         ]);
         unset($_SESSION['_csrf_token']);

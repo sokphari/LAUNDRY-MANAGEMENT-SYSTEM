@@ -17,7 +17,7 @@
                 <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400"><?= e($index + 1) ?></td>
                 <td class="px-5 py-4 font-medium"><?= e($service['name'] ?? '') ?></td>
                 <td class="max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e($service['description'] ?: '—') ?></td>
-                <td class="whitespace-nowrap px-5 py-4 font-medium"><?= e(number_format((float) $service['price'], 2)) ?> KHR / <?= e($service['billing_unit'] ?? 'piece') ?></td>
+                <td class="whitespace-nowrap px-5 py-4 font-medium"><?= e(format_khr($service['price'])) ?> KHR / <?= e($service['billing_unit'] ?? 'piece') ?></td>
                 <td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-xs font-semibold <?= (int) $service['is_active'] === 1 ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300' ?>"><?= (int) $service['is_active'] === 1 ? 'Active' : 'Inactive' ?></span></td>
                 <td class="whitespace-nowrap px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e(date('d M Y, H:i', strtotime((string) $service['created_at']))) ?></td>
                 <td class="px-5 py-4"><div class="flex items-center justify-end gap-2">
@@ -28,7 +28,7 @@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/></svg>
                     </a>
                     <form method="post" action="/services/<?= (int) $service['id'] ?>/status" data-service-status-form><input type="hidden" name="_csrf_token" value="<?= e($csrfToken) ?>"><input type="hidden" name="is_active" value="<?= (int) $service['is_active'] === 1 ? '0' : '1' ?>"><button type="submit" aria-label="<?= (int) $service['is_active'] === 1 ? 'Deactivate' : 'Activate' ?> <?= e($service['name'] ?? 'service') ?>" title="<?= (int) $service['is_active'] === 1 ? 'Deactivate service' : 'Activate service' ?>" class="grid size-9 place-items-center rounded-lg border border-zinc-200 <?= (int) $service['is_active'] === 1 ? 'text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-900 dark:hover:bg-red-950' : 'text-green-700 hover:border-green-300 hover:bg-green-50 dark:text-green-300 dark:hover:border-green-900 dark:hover:bg-green-950' ?> focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700">
-                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v9m6.36-6.36a9 9 0 1 1-12.72 0"/></svg>
+                        <?php if ((int) $service['is_active'] === 1): ?><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><?php else: ?><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 7.5-2"/></svg><?php endif; ?>
                     </button></form><?php endif; ?>
                 </div></td>
             </tr><?php endforeach; ?>
