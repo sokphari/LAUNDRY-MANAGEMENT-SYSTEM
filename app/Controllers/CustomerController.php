@@ -9,6 +9,7 @@ use App\Core\Csrf;
 use App\Core\Database;
 use App\Core\View;
 use App\Models\Customer;
+use App\Services\AuditLog as AuditLogService;
 use PDOException;
 
 final class CustomerController
@@ -80,8 +81,16 @@ final class CustomerController
         }
 
         try {
-            Customer::create(Database::connect($databaseConfig), $customer);
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            Customer::create($database, $customer);
+            $customerId = (int) $database->lastInsertId();
+            AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'customer.created', 'customer', $customerId, 'Created customer ' . $customer['name'], [
+                'after' => ['name' => $customer['name'], 'phone' => $customer['phone'], 'address' => $customer['address'], 'notes' => $customer['notes']],
+            ]);
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::logDatabaseError($exception);
             self::renderForm('Add Customer', $customer, ['form' => self::databaseErrorMessage($exception, 'save')], '/customers/create');
             return;
@@ -130,12 +139,21 @@ final class CustomerController
         }
 
         try {
-            if (!Customer::deactivate(Database::connect($databaseConfig), (int) $id)) {
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            $before = Customer::findForUpdate($database, (int) $id);
+            if ($before === false || !Customer::deactivate($database, (int) $id)) {
+                $database->rollBack();
                 http_response_code(404);
                 echo '404 Not Found';
                 return;
             }
+            AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'customer.deactivated', 'customer', (int) $id, 'Deactivated customer ' . $before['name'], [
+                'before' => ['is_active' => true], 'after' => ['is_active' => false],
+            ]);
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::logDatabaseError($exception);
             self::setFlash('error', 'Could not deactivate this customer. Please try again.');
             header('Location: /customers', true, 303);
@@ -166,8 +184,34 @@ final class CustomerController
         }
 
         try {
-            Customer::update(Database::connect($databaseConfig), (int) $id, $input);
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            $before = Customer::findForUpdate($database, (int) $id);
+            if ($before === false) {
+                $database->rollBack();
+                http_response_code(404);
+                echo '404 Not Found';
+                return;
+            }
+            Customer::update($database, (int) $id, $input);
+            $oldValues = ['name' => (string) $before['name'], 'phone' => (string) $before['phone'], 'address' => (string) ($before['address'] ?? ''), 'notes' => (string) ($before['notes'] ?? '')];
+            $newValues = $input;
+            $changedBefore = $changedAfter = [];
+            foreach ($newValues as $field => $value) {
+                if ($oldValues[$field] !== $value) {
+                    $changedBefore[$field] = $oldValues[$field];
+                    $changedAfter[$field] = $value;
+                }
+            }
+            if ($changedAfter !== []) {
+                AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'customer.updated', 'customer', (int) $id, 'Updated customer ' . $input['name'], [
+                    'before' => $changedBefore,
+                    'after' => $changedAfter,
+                ]);
+            }
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::logDatabaseError($exception);
             self::renderForm('Edit Customer', $input, ['form' => self::databaseErrorMessage($exception, 'update')], '/customers/' . (int) $id . '/edit');
             return;

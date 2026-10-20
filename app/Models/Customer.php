@@ -52,6 +52,17 @@ final class Customer
         return $statement->fetch();
     }
 
+    /** @return array<string, mixed>|false */
+    public static function findForUpdate(PDO $database, int $id): array|false
+    {
+        $statement = $database->prepare(
+            'SELECT id, name, phone, address, notes, is_active
+             FROM customers WHERE id = :id LIMIT 1 FOR UPDATE'
+        );
+        $statement->execute(['id' => $id]);
+        return $statement->fetch();
+    }
+
     /** @param array{name: string, phone: string, address: ?string, notes: ?string} $data */
     public static function create(PDO $database, array $data): void
     {

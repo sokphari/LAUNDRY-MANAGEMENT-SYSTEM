@@ -10,6 +10,7 @@ use App\Core\Database;
 use App\Core\View;
 use App\Models\Service;
 use App\Middleware\RequireRole;
+use App\Services\AuditLog as AuditLogService;
 use PDOException;
 
 final class ServiceController
@@ -75,13 +76,31 @@ final class ServiceController
             return;
         }
         try {
-            if (!Service::setActive(Database::connect($databaseConfig), (int) $id, (string) $active === '1')) {
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            $before = Service::findForUpdate($database, (int) $id);
+            if ($before === false) {
+                $database->rollBack();
                 http_response_code(404);
-                echo json_encode(['error' => 'Service not found or status already changed.']);
+                echo json_encode(['error' => 'Service not found.']);
                 return;
             }
+            $nextActive = (string) $active === '1';
+            if (!Service::setActive($database, (int) $id, $nextActive)) {
+                $database->rollBack();
+                http_response_code(404);
+                echo json_encode(['error' => 'Service status is already up to date.']);
+                return;
+            }
+            $action = $nextActive ? 'service.activated' : 'service.deactivated';
+            AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), $action, 'service', (int) $id, ($nextActive ? 'Activated service ' : 'Deactivated service ') . $before['name'], [
+                'before' => ['is_active' => (bool) $before['is_active']],
+                'after' => ['is_active' => $nextActive],
+            ]);
+            $database->commit();
             echo json_encode(['success' => true, 'is_active' => (string) $active === '1']);
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::log($exception);
             http_response_code(500);
             echo json_encode(['error' => 'Could not update this service status.']);
@@ -108,8 +127,15 @@ final class ServiceController
                 self::renderForm('Add Service', $data, ['name' => 'A service with this name and billing unit already exists. Edit its price instead.'], '/services/create');
                 return;
             }
+            $database->beginTransaction();
             Service::create($database, self::databaseInput($data));
+            $serviceId = (int) $database->lastInsertId();
+            AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'service.created', 'service', $serviceId, 'Created service ' . $data['name'], [
+                'after' => ['name' => $data['name'], 'description' => $data['description'], 'price' => (float) $data['price'], 'billing_unit' => $data['billing_unit'], 'is_active' => true],
+            ]);
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::log($exception);
             $errors = self::isDuplicateError($exception)
                 ? ['name' => 'A service with this name and billing unit already exists. Edit its price instead.']
@@ -153,8 +179,35 @@ final class ServiceController
                 self::renderForm('Edit Service', $data, ['name' => 'Another service already uses this name and billing unit.'], '/services/' . (int) $id . '/edit');
                 return;
             }
+            $database->beginTransaction();
+            $before = Service::findForUpdate($database, (int) $id);
+            if ($before === false) {
+                $database->rollBack();
+                http_response_code(404);
+                echo '404 Not Found';
+                return;
+            }
             Service::update($database, (int) $id, self::databaseInput($data));
+            $changedPrice = (float) $before['price'] !== (float) $data['price'];
+            $action = $changedPrice ? 'service.price_updated' : 'service.updated';
+            $oldValues = ['name' => (string) $before['name'], 'description' => (string) ($before['description'] ?? ''), 'price' => (float) $before['price'], 'billing_unit' => (string) $before['billing_unit']];
+            $newValues = ['name' => $data['name'], 'description' => $data['description'], 'price' => (float) $data['price'], 'billing_unit' => $data['billing_unit']];
+            $changedBefore = $changedAfter = [];
+            foreach ($newValues as $field => $value) {
+                if ($oldValues[$field] !== $value) {
+                    $changedBefore[$field] = $oldValues[$field];
+                    $changedAfter[$field] = $value;
+                }
+            }
+            if ($changedAfter !== []) {
+                AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), $action, 'service', (int) $id, ($changedPrice ? 'Updated price for service ' : 'Updated service ') . $data['name'], [
+                    'before' => $changedBefore,
+                    'after' => $changedAfter,
+                ]);
+            }
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::log($exception);
             $errors = self::isDuplicateError($exception)
                 ? ['name' => 'Another service already uses this name and billing unit.']
@@ -174,8 +227,23 @@ final class ServiceController
         $service = self::find($id, $databaseConfig);
         if ($service === null) return;
         try {
-            Service::deactivate(Database::connect($databaseConfig), (int) $id);
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            $before = Service::findForUpdate($database, (int) $id);
+            if ($before === false) {
+                $database->rollBack();
+                http_response_code(404);
+                echo '404 Not Found';
+                return;
+            }
+            if (Service::deactivate($database, (int) $id)) {
+                AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'service.deactivated', 'service', (int) $id, 'Deactivated service ' . $before['name'], [
+                    'before' => ['is_active' => true], 'after' => ['is_active' => false],
+                ]);
+            }
+            $database->commit();
         } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::log($exception);
             self::flash('error', 'Could not deactivate the service. Please try again.');
             header('Location: /services', true, 303);

@@ -233,6 +233,13 @@ const orderStatusClasses = {
   collected: 'border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
   cancelled: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300',
 };
+const orderNextStatuses = {
+  received: ['processing', 'cancelled'],
+  processing: ['ready', 'cancelled'],
+  ready: ['collected', 'cancelled'],
+  collected: [],
+  cancelled: [],
+};
 const orderStatusBaseClasses = 'rounded-lg border px-2 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30';
 
 if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagination) {
@@ -316,7 +323,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       select.dataset.orderStatus = '';
       select.dataset.currentStatus = order.status;
       select.className = `${orderStatusBaseClasses} ${orderStatusClasses[order.status] || orderStatusClasses.received}`;
-      ['received', 'processing', 'ready', 'collected', 'cancelled'].forEach((status) => {
+      [order.status, ...(orderNextStatuses[order.status] || [])].forEach((status) => {
         const option = new Option(status[0].toUpperCase() + status.slice(1), status, false, order.status === status);
         select.append(option);
       });
@@ -354,6 +361,19 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
         editLink.className = 'inline-grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-300';
         editLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14.25 5.25 4.5 4.5M4 20l4.2-.9L19 8.3a2.12 2.12 0 0 0-3-3L5.2 16.1 4 20Z"/></svg>';
         actions.append(editLink);
+      }
+      if (balanceAmount > 0 && order.status !== 'cancelled') {
+        const paymentButton = document.createElement('button');
+        paymentButton.type = 'button';
+        paymentButton.dataset.recordPayment = '';
+        paymentButton.dataset.orderId = String(Number(order.id));
+        paymentButton.dataset.orderCode = order.order_code;
+        paymentButton.dataset.balance = balanceAmount.toFixed(2);
+        paymentButton.setAttribute('aria-label', `Record payment for ${order.order_code}`);
+        paymentButton.title = 'Record payment';
+        paymentButton.className = 'inline-grid size-9 place-items-center rounded-lg border border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950';
+        paymentButton.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18m-13 5h3"/></svg>';
+        actions.append(paymentButton);
       }
       actions.append(printLink, viewLink);
       actionCell.append(actions);
@@ -452,6 +472,7 @@ document.addEventListener('change', async (event) => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || 'Could not update order status.');
     select.dataset.currentStatus = result.status;
+    select.replaceChildren(...[result.status, ...result.allowed_statuses].map((status) => new Option(status[0].toUpperCase() + status.slice(1), status, false, status === result.status)));
     select.value = result.status;
     select.className = `${orderStatusBaseClasses} ${orderStatusClasses[result.status] || orderStatusClasses.received}`;
     select.disabled = result.allowed_statuses.length === 0;
@@ -467,4 +488,41 @@ document.addEventListener('change', async (event) => {
     if (message) message.textContent = error.message || 'Could not update order status.';
     showOrderActionNotice(error.message || 'Could not update order status.', 'error');
   }
+});
+
+document.addEventListener('click', (event) => {
+  const paymentButton = event.target.closest('[data-record-payment]');
+  if (paymentButton) {
+    const dialog = document.querySelector('#record-payment-dialog');
+    const form = dialog?.querySelector('[data-record-payment-form]');
+    const amountInput = dialog?.querySelector('[data-payment-amount]');
+    if (!dialog || !form || !amountInput || typeof dialog.showModal !== 'function') return;
+    form.action = `/orders/${Number(paymentButton.dataset.orderId)}/payments`;
+    amountInput.max = paymentButton.dataset.balance;
+    amountInput.value = '';
+    dialog.querySelector('[data-payment-order-code]').textContent = paymentButton.dataset.orderCode || '';
+    dialog.querySelector('[data-payment-balance]').textContent = `${Number(paymentButton.dataset.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} KHR`;
+    form.querySelector('[name="_return_to"]').value = `${location.pathname}${location.search}`;
+    dialog.showModal();
+    amountInput.focus();
+    return;
+  }
+
+  const paymentCloseButton = event.target.closest('[data-payment-dialog-close]');
+  if (paymentCloseButton) {
+    paymentCloseButton.closest('dialog')?.close();
+    return;
+  }
+
+  const openButton = event.target.closest('[data-refund-dialog-open]');
+  if (openButton) {
+    const dialog = document.getElementById(openButton.dataset.refundDialogOpen);
+    if (!dialog || typeof dialog.showModal !== 'function') return;
+    dialog.showModal();
+    dialog.querySelector('[name="amount"]')?.focus();
+    return;
+  }
+
+  const closeButton = event.target.closest('[data-refund-dialog-close]');
+  if (closeButton) closeButton.closest('dialog')?.close();
 });

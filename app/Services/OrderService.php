@@ -148,7 +148,7 @@ final class OrderService
             }
             $discount = (float) $order['discount_amount'];
             $total = round($subtotal - $discount, 2);
-            $paidStatement = $database->prepare('SELECT COALESCE(SUM(amount), 0) FROM order_payments WHERE order_id = :id AND voided_at IS NULL');
+            $paidStatement = $database->prepare('SELECT COALESCE(SUM(p.amount - COALESCE((SELECT SUM(r.amount) FROM order_payment_refunds r WHERE r.payment_id = p.id), 0)), 0) FROM order_payments p WHERE p.order_id = :id AND p.voided_at IS NULL');
             $paidStatement->execute(['id' => $orderId]);
             if ($total + 0.0001 < (float) $paidStatement->fetchColumn()) {
                 throw new InvalidOrderException(['items' => 'The new total cannot be less than payments already received.']);
@@ -184,7 +184,7 @@ final class OrderService
             if ($record['status'] === 'cancelled') {
                 throw new InvalidOrderException(['payment' => 'Payments cannot be added to a cancelled order.']);
             }
-            $paid = $database->prepare('SELECT COALESCE(SUM(amount), 0) FROM order_payments WHERE order_id = :id AND voided_at IS NULL');
+            $paid = $database->prepare('SELECT COALESCE(SUM(p.amount - COALESCE((SELECT SUM(r.amount) FROM order_payment_refunds r WHERE r.payment_id = p.id), 0)), 0) FROM order_payments p WHERE p.order_id = :id AND p.voided_at IS NULL');
             $paid->execute(['id' => $orderId]);
             $balance = max(0, round((float) $record['total_amount'] - (float) $paid->fetchColumn(), 2));
             if ((float) $amount > $balance) {
@@ -207,6 +207,58 @@ final class OrderService
         }
     }
 
+    public static function refundPayment(PDO $database, int $orderId, int $paymentId, int $userId, string $amount, string $method, string $reason): void
+    {
+        $database->beginTransaction();
+        try {
+            $orderStatement = $database->prepare('SELECT order_code FROM orders WHERE id = :id FOR UPDATE');
+            $orderStatement->execute(['id' => $orderId]);
+            $order = $orderStatement->fetch();
+            if ($order === false) throw new InvalidOrderException(['refund' => 'Order not found.']);
+
+            $paymentStatement = $database->prepare('SELECT id, amount, method, voided_at FROM order_payments WHERE id = :payment_id AND order_id = :order_id FOR UPDATE');
+            $paymentStatement->execute(['payment_id' => $paymentId, 'order_id' => $orderId]);
+            $payment = $paymentStatement->fetch();
+            if ($payment === false) throw new InvalidOrderException(['refund' => 'Payment not found.']);
+            if ($payment['voided_at'] !== null) throw new InvalidOrderException(['refund' => 'A corrected payment cannot be refunded.']);
+            if (!preg_match('/^(?:0|[1-9][0-9]{0,9})(?:\\.[0-9]{1,2})?$/', $amount) || (float) $amount <= 0) {
+                throw new InvalidOrderException(['refund' => 'Enter a valid refund amount greater than 0.']);
+            }
+            if (!in_array($method, ['cash', 'khqr'], true)) throw new InvalidOrderException(['refund' => 'Choose a valid refund method.']);
+            $reason = trim($reason);
+            if ($reason === '' || mb_strlen($reason) > 500) throw new InvalidOrderException(['refund' => 'Enter a refund reason (up to 500 characters).']);
+
+            $refundedStatement = $database->prepare('SELECT COALESCE(SUM(amount), 0) FROM order_payment_refunds WHERE payment_id = :payment_id');
+            $refundedStatement->execute(['payment_id' => $paymentId]);
+            $refundedBefore = (float) $refundedStatement->fetchColumn();
+            $refundableBefore = max(0, round((float) $payment['amount'] - $refundedBefore, 2));
+            $refundAmount = round((float) $amount, 2);
+            if ($refundAmount > $refundableBefore) {
+                throw new InvalidOrderException(['refund' => 'Refund cannot exceed the unrefunded amount of this payment (' . number_format($refundableBefore, 2) . ' KHR).']);
+            }
+
+            $insert = $database->prepare('INSERT INTO order_payment_refunds (payment_id, refunded_by, amount, refund_method, reason) VALUES (:payment_id, :refunded_by, :amount, :refund_method, :reason)');
+            $insert->execute(['payment_id' => $paymentId, 'refunded_by' => $userId, 'amount' => number_format($refundAmount, 2, '.', ''), 'refund_method' => $method, 'reason' => $reason]);
+            $refundId = (int) $database->lastInsertId();
+            $refundedAfter = round($refundedBefore + $refundAmount, 2);
+            $refundableAfter = max(0, round((float) $payment['amount'] - $refundedAfter, 2));
+            AuditLog::record($database, $userId, 'refund.completed', 'refund', $refundId, 'Refunded ' . number_format($refundAmount, 2) . ' KHR for order ' . $order['order_code'], [
+                'order_id' => $orderId,
+                'payment_id' => $paymentId,
+                'payment_method' => $payment['method'],
+                'refund_method' => $method,
+                'amount' => $refundAmount,
+                'before' => ['refunded_amount' => $refundedBefore, 'remaining_refundable' => $refundableBefore],
+                'after' => ['refunded_amount' => $refundedAfter, 'remaining_refundable' => $refundableAfter],
+                'reason' => $reason,
+            ]);
+            $database->commit();
+        } catch (Throwable $exception) {
+            if ($database->inTransaction()) $database->rollBack();
+            throw $exception;
+        }
+    }
+
     public static function correctPayment(PDO $database, int $orderId, int $paymentId, int $userId, string $reason, string $replacementAmount = '', string $replacementMethod = ''): void
     {
         $database->beginTransaction();
@@ -222,9 +274,12 @@ final class OrderService
             $payment = $paymentStatement->fetch();
             if ($payment === false) throw new InvalidOrderException(['payment' => 'Payment not found.']);
             if ($payment['voided_at'] !== null) throw new InvalidOrderException(['payment' => 'This payment has already been corrected.']);
+            $refundCount = $database->prepare('SELECT COUNT(*) FROM order_payment_refunds WHERE payment_id = :payment_id');
+            $refundCount->execute(['payment_id' => $paymentId]);
+            if ((int) $refundCount->fetchColumn() > 0) throw new InvalidOrderException(['payment' => 'A payment with recorded refunds cannot be corrected.']);
             if (trim($reason) === '' || mb_strlen($reason) > 500) throw new InvalidOrderException(['reason' => 'Enter a correction reason (up to 500 characters).']);
 
-            $paidStatement = $database->prepare('SELECT COALESCE(SUM(amount), 0) FROM order_payments WHERE order_id = :id AND voided_at IS NULL AND id <> :payment_id');
+            $paidStatement = $database->prepare('SELECT COALESCE(SUM(p.amount - COALESCE((SELECT SUM(r.amount) FROM order_payment_refunds r WHERE r.payment_id = p.id), 0)), 0) FROM order_payments p WHERE p.order_id = :id AND p.voided_at IS NULL AND p.id <> :payment_id');
             $paidStatement->execute(['id' => $orderId, 'payment_id' => $paymentId]);
             $paidWithoutOriginal = (float) $paidStatement->fetchColumn();
             $replacementId = null;
@@ -258,9 +313,13 @@ final class OrderService
             $record = $statement->fetch();
             if ($record === false) { $database->rollBack(); return false; }
             $oldStatus = (string) $record['status'];
-            if (in_array($oldStatus, ['collected', 'cancelled'], true) || !in_array($newStatus, ['received', 'processing', 'ready', 'collected', 'cancelled'], true)) {
+            if (in_array($oldStatus, ['collected', 'cancelled'], true)) {
                 $database->rollBack();
                 throw new InvalidOrderException(['status' => 'A collected or cancelled order cannot be changed.']);
+            }
+            if (!in_array($newStatus, ['received', 'processing', 'ready', 'collected', 'cancelled'], true)) {
+                $database->rollBack();
+                throw new InvalidOrderException(['status' => 'Choose a valid order status.']);
             }
             if ($newStatus === 'cancelled' && (trim($reason) === '' || mb_strlen($reason) > 500)) {
                 throw new InvalidOrderException(['status' => 'Enter a cancellation reason (up to 500 characters).']);
@@ -269,8 +328,17 @@ final class OrderService
                 $database->commit();
                 return true;
             }
+            $nextStatuses = match ($oldStatus) {
+                'received' => ['processing', 'cancelled'],
+                'processing' => ['ready', 'cancelled'],
+                'ready' => ['collected', 'cancelled'],
+                default => [],
+            };
+            if (!in_array($newStatus, $nextStatuses, true)) {
+                throw new InvalidOrderException(['status' => 'Move the order through its next status before changing it to ' . $newStatus . '.']);
+            }
             if ($newStatus === 'collected') {
-                $paid = $database->prepare('SELECT COALESCE(SUM(amount), 0) FROM order_payments WHERE order_id = :id AND voided_at IS NULL');
+                $paid = $database->prepare('SELECT COALESCE(SUM(p.amount - COALESCE((SELECT SUM(r.amount) FROM order_payment_refunds r WHERE r.payment_id = p.id), 0)), 0) FROM order_payments p WHERE p.order_id = :id AND p.voided_at IS NULL');
                 $paid->execute(['id' => $orderId]);
                 if ((float) $paid->fetchColumn() + 0.0001 < (float) $record['total_amount']) {
                     throw new InvalidOrderException(['status' => 'Record the full payment before marking this order collected.']);

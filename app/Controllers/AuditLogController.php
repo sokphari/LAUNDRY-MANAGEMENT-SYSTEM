@@ -24,8 +24,11 @@ final class AuditLogController
         'service.price_updated' => 'Service Price Updated',
         'service.updated' => 'Service Updated',
         'service.created' => 'Service Created',
+        'service.activated' => 'Service Activated',
+        'service.deactivated' => 'Service Deactivated',
         'customer.updated' => 'Customer Updated',
         'customer.created' => 'Customer Created',
+        'customer.deactivated' => 'Customer Deactivated',
         'refund.completed' => 'Refund Completed',
     ];
 
@@ -115,7 +118,7 @@ final class AuditLogController
 
     public static function actionClass(string $action): string
     {
-        if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created', 'service.activated'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if ($action === 'order.status_changed') return 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
         if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
         if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';

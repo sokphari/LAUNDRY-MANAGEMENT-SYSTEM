@@ -237,22 +237,23 @@ final class OrderController
         $amount = self::postString('amount');
         $method = self::postString('method');
         if (!ctype_digit($id) || (int) $id < 1) { http_response_code(404); echo '404 Not Found'; return; }
+        $returnTarget = self::statusReturnTarget('/orders/' . (int) $id);
         if (!self::validMoney($amount) || (float) $amount <= 0 || !in_array($method, ['cash', 'khqr'], true)) {
             self::flash('error', 'Enter a valid payment amount and method.');
-            header('Location: /orders/' . (int) $id, true, 303); return;
+            header('Location: ' . $returnTarget, true, 303); return;
         }
         try {
             OrderService::addPayment(Database::connect($databaseConfig), (int) $id, (int) (Auth::user()['id'] ?? 0), $amount, $method);
         } catch (InvalidOrderException $exception) {
             self::flash('error', $exception->errors['payment'] ?? 'Could not record payment.');
-            header('Location: /orders/' . (int) $id, true, 303); return;
+            header('Location: ' . $returnTarget, true, 303); return;
         } catch (PDOException $exception) {
             self::log($exception);
             self::flash('error', 'Could not record payment. Check the database connection and migrations.');
-            header('Location: /orders/' . (int) $id, true, 303); return;
+            header('Location: ' . $returnTarget, true, 303); return;
         }
         self::flash('success', 'Payment recorded successfully.');
-        header('Location: /orders/' . (int) $id, true, 303);
+        header('Location: ' . $returnTarget, true, 303);
     }
 
     /** @param array<string, mixed> $databaseConfig */
@@ -280,6 +281,34 @@ final class OrderController
             header('Location: /orders/' . (int) $id, true, 303); return;
         }
         self::flash('success', 'Payment corrected. The original entry remains in the payment history.');
+        header('Location: /orders/' . (int) $id, true, 303);
+    }
+
+    /** @param array<string, mixed> $databaseConfig */
+    public static function refundPayment(string $id, string $paymentId, array $databaseConfig): void
+    {
+        if (!ctype_digit($id) || (int) $id < 1 || !ctype_digit($paymentId) || (int) $paymentId < 1) { http_response_code(404); echo '404 Not Found'; return; }
+        if (!Csrf::verify(isset($_POST['_csrf_token']) && is_string($_POST['_csrf_token']) ? $_POST['_csrf_token'] : null)) {
+            http_response_code(419); echo 'Your session expired. Please go back and try again.'; return;
+        }
+        $amount = self::postString('amount');
+        $method = self::postString('method');
+        $reason = self::postString('reason');
+        if (!self::validMoney($amount) || (float) $amount <= 0 || !in_array($method, ['cash', 'khqr'], true) || $reason === '' || mb_strlen($reason) > 500) {
+            self::flash('error', $reason === '' ? 'Enter a reason for the refund.' : (!self::validMoney($amount) || (float) $amount <= 0 ? 'Enter a valid refund amount.' : (!in_array($method, ['cash', 'khqr'], true) ? 'Choose a valid refund method.' : 'Refund reason must be 500 characters or fewer.')));
+            header('Location: /orders/' . (int) $id, true, 303); return;
+        }
+        try {
+            OrderService::refundPayment(Database::connect($databaseConfig), (int) $id, (int) $paymentId, (int) (Auth::user()['id'] ?? 0), $amount, $method, $reason);
+        } catch (InvalidOrderException $exception) {
+            self::flash('error', $exception->errors['refund'] ?? 'Could not record this refund.');
+            header('Location: /orders/' . (int) $id, true, 303); return;
+        } catch (PDOException $exception) {
+            self::log($exception);
+            self::flash('error', 'Could not record this refund. Check the database connection and migrations.');
+            header('Location: /orders/' . (int) $id, true, 303); return;
+        }
+        self::flash('success', 'Refund recorded successfully.');
         header('Location: /orders/' . (int) $id, true, 303);
     }
 

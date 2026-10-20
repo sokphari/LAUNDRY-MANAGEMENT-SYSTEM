@@ -133,6 +133,9 @@ $router->post('/orders/{id}/payments', static function (string $id) use ($databa
 $router->post('/orders/{id}/payments/{paymentId}/correct', static function (string $id, string $paymentId) use ($databaseConfig): void {
     if (RequireAuth::run()) OrderController::correctPayment($id, $paymentId, $databaseConfig);
 });
+$router->post('/orders/{id}/payments/{paymentId}/refund', static function (string $id, string $paymentId) use ($databaseConfig): void {
+    if (RequireAuth::run()) OrderController::refundPayment($id, $paymentId, $databaseConfig);
+});
 $router->get('/orders/{id}/edit', static function (string $id) use ($databaseConfig): void {
     if (RequireAuth::run()) OrderController::edit($id, $databaseConfig);
 });

@@ -33,6 +33,14 @@ final class Service
         return $statement->fetch();
     }
 
+    /** @return array<string, mixed>|false */
+    public static function findForUpdate(PDO $database, int $id): array|false
+    {
+        $statement = $database->prepare('SELECT id, name, description, price, billing_unit, is_active, created_at FROM services WHERE id = :id LIMIT 1 FOR UPDATE');
+        $statement->execute(['id' => $id]);
+        return $statement->fetch();
+    }
+
     /** @param array{name: string, description: string, price: string, billing_unit: string} $data */
     public static function create(PDO $database, array $data): void
     {

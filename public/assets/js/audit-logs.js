@@ -32,6 +32,13 @@ if (auditForm && auditRows && auditPagination && auditCount) {
   };
 
   const humanize = (value) => String(value).replaceAll('_', ' ').replaceAll('.', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const formatFieldValue = (field, value) => {
+    const isMoney = /(price|amount|total|subtotal|deposit|refundable)$/.test(field);
+    const formatted = isMoney && value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))
+      ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(Number(value))
+      : formatValue(value);
+    return isMoney && value !== null && value !== undefined && value !== '' ? `${formatted} KHR` : formatted;
+  };
   const formatValue = (value) => {
     if (value === null || value === undefined || value === '') return '—';
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
@@ -61,18 +68,22 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       const before = flatten(details.before || {});
       const after = flatten(details.after || {});
       const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
-      return { reason, rows: keys.map((key) => [humanize(key), formatValue(before[key]), formatValue(after[key])]) };
+      const rows = keys.map((key) => [humanize(key), formatFieldValue(key, before[key]), formatFieldValue(key, after[key])]);
+      if (details.amount !== undefined) rows.push(['This refund', '—', formatFieldValue('amount', details.amount)]);
+      if (details.payment_method !== undefined) rows.push(['Original payment method', '—', formatValue(details.payment_method)]);
+      if (details.refund_method !== undefined) rows.push(['Refund method', '—', formatValue(details.refund_method)]);
+      return { reason, rows };
     }
     if ('old_status' in details || 'new_status' in details) {
       return { reason, rows: [['Status', formatValue(details.old_status), formatValue(details.new_status)]] };
     }
     if ('original_amount' in details || 'replacement_amount' in details) {
       const hasReplacement = details.replacement_amount !== null && details.replacement_amount !== undefined;
-      const rows = [['Payment amount', formatValue(details.original_amount), hasReplacement ? formatValue(details.replacement_amount) : 'Voided (no replacement)']];
+      const rows = [['Payment amount', formatFieldValue('original_amount', details.original_amount), hasReplacement ? formatFieldValue('replacement_amount', details.replacement_amount) : 'Voided (no replacement)']];
       if (details.original_method !== undefined || details.replacement_method !== undefined) rows.push(['Payment method', formatValue(details.original_method), hasReplacement ? formatValue(details.replacement_method) : 'Voided']);
       return { reason, rows };
     }
-    const rows = Object.entries(details).filter(([key]) => key !== 'reason').map(([key, value]) => [humanize(key), '—', formatValue(value)]);
+    const rows = Object.entries(details).filter(([key]) => key !== 'reason').map(([key, value]) => [humanize(key), '—', formatFieldValue(key, value)]);
     return { reason, rows };
   };
 
@@ -214,8 +225,8 @@ if (auditForm && auditRows && auditPagination && auditCount) {
         const link = document.createElement('a');
         link.href = `/orders/${linkedOrderId}`;
         link.className = 'font-medium text-primary hover:underline';
-        link.textContent = log.entity_type === 'payment'
-          ? `Order #${linkedOrderId} · Payment #${log.entity_id}`
+        link.textContent = ['payment', 'refund'].includes(log.entity_type)
+          ? `Order #${linkedOrderId} · ${humanize(log.entity_type)} #${log.entity_id}`
           : `${(log.entity_type || 'record')[0].toUpperCase()}${(log.entity_type || 'record').slice(1)} #${log.entity_id}`;
         recordCell.append(link);
       } else {
