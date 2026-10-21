@@ -57,7 +57,7 @@
             <div class="grid max-w-4xl gap-4 md:grid-cols-2">
                 <div>
                     <label for="profile_image" class="mb-1.5 block text-sm font-medium"><?= e(t('Choose image file')) ?></label>
-                    <input id="profile_image" name="profile_image" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="h-12 w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 file:mr-3 file:rounded-md file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:font-semibold file:text-primary dark:border-zinc-700 dark:bg-zinc-900">
+                    <input id="profile_image" name="profile_imagThe Staff Dashboard displays only personal statistics; however, this does not mean that a staff member cannot access orders created by others. In a real-world laundry shop, a staff member might need to process payments or hand over garments for orders created by a colleague. Therefore, operational access should be granted based on roles, while personal reports must be filtered by Staff ID.e" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="h-12 w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 file:mr-3 file:rounded-md file:border-0 file:bg-violet-50 file:px-3 file:py-1.5 file:font-semibold file:text-primary dark:border-zinc-700 dark:bg-zinc-900">
                 </div>
                 <div>
                 <label for="profile_url" class="mb-1.5 block text-sm font-medium"><?= e(t('Image URL')) ?></label>

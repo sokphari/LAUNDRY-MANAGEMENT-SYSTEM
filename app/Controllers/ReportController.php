@@ -18,7 +18,7 @@ final class ReportController
     {
         [$from, $to, $range, $fromDate, $toDate] = self::dateRange();
         try {
-            $data = self::reportData(Database::connect($databaseConfig), $from, $to);
+            $data = self::reportData(Database::connect($databaseConfig), $from, $to, Auth::user());
         } catch (PDOException $exception) {
             error_log('[reports] ' . $exception->getMessage());
             http_response_code(500);
@@ -48,7 +48,7 @@ final class ReportController
         [, , $range, $fromDate, $toDate] = self::dateRange();
         $from = $fromDate !== '' ? $fromDate . ' 00:00:00' : null;
         $to = $toDate !== '' ? (new DateTimeImmutable($toDate))->modify('+1 day')->format('Y-m-d 00:00:00') : null;
-        try { $data = self::reportData(Database::connect($databaseConfig), $from, $to); }
+        try { $data = self::reportData(Database::connect($databaseConfig), $from, $to, Auth::user()); }
         catch (PDOException $exception) { error_log('[reports-export] ' . $exception->getMessage()); http_response_code(500); echo 'Report data is temporarily unavailable.'; return; }
 
         if ($format === 'csv') {
@@ -90,16 +90,17 @@ final class ReportController
     }
 
     /** @return array<string, mixed> */
-    private static function reportData(PDO $db, ?string $from, ?string $to): array
+    private static function reportData(PDO $db, ?string $from, ?string $to, ?array $actor = null): array
     {
-        $orderWhere = '1=1'; $orderParams = [];
+        $staffId = ($actor['role'] ?? 'admin') === 'admin' ? null : (int) ($actor['id'] ?? 0);
+        $orderWhere = $staffId === null ? '1=1' : 'o.created_by = :staff_order_id'; $orderParams = $staffId === null ? [] : ['staff_order_id' => $staffId];
         if ($from !== null) { $orderWhere .= ' AND o.received_at >= :order_from'; $orderParams['order_from'] = $from; }
         if ($to !== null) { $orderWhere .= ' AND o.received_at < :order_to'; $orderParams['order_to'] = $to; }
         $stmt = $db->prepare("SELECT COUNT(*) orders, COALESCE(SUM(o.total_amount),0) total, COALESCE(SUM(o.discount_amount),0) discounts FROM orders o WHERE $orderWhere");
         $stmt->execute($orderParams); $orders = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-        $paymentWhere = 'p.voided_at IS NULL'; $paymentParams = [];
-        $refundWhere = 'p.voided_at IS NULL'; $refundParams = [];
+        $paymentWhere = 'p.voided_at IS NULL' . ($staffId === null ? '' : ' AND p.received_by = :staff_payment_id'); $paymentParams = $staffId === null ? [] : ['staff_payment_id' => $staffId];
+        $refundWhere = 'p.voided_at IS NULL' . ($staffId === null ? '' : ' AND r.refunded_by = :staff_refund_id'); $refundParams = $staffId === null ? [] : ['staff_refund_id' => $staffId];
         if ($from !== null) { $paymentWhere .= ' AND p.paid_at >= :payment_from'; $paymentParams['payment_from'] = $from; $refundWhere .= ' AND r.refunded_at >= :refund_from'; $refundParams['refund_from'] = $from; }
         if ($to !== null) { $paymentWhere .= ' AND p.paid_at < :payment_to'; $paymentParams['payment_to'] = $to; $refundWhere .= ' AND r.refunded_at < :refund_to'; $refundParams['refund_to'] = $to; }
         $stmt = $db->prepare("SELECT COALESCE(SUM(p.amount),0) amount FROM order_payments p WHERE $paymentWhere"); $stmt->execute($paymentParams); $received = (float) $stmt->fetchColumn();
@@ -128,13 +129,14 @@ final class ReportController
              WHERE $orderWhere"
         );
         $balanceStmt->execute($orderParams); $outstanding = (float)$balanceStmt->fetchColumn();
-        $snapshotStmt = $db->query(
+        $snapshotSql =
             "SELECT COALESCE(SUM(GREATEST(o.total_amount - COALESCE(paid.amount,0) + COALESCE(refunded.amount,0),0)),0)
              FROM orders o
              LEFT JOIN (SELECT p.order_id, SUM(p.amount) amount FROM order_payments p WHERE p.voided_at IS NULL GROUP BY p.order_id) paid ON paid.order_id=o.id
              LEFT JOIN (SELECT p.order_id, SUM(r.amount) amount FROM order_payment_refunds r INNER JOIN order_payments p ON p.id=r.payment_id AND p.voided_at IS NULL GROUP BY p.order_id) refunded ON refunded.order_id=o.id
-             WHERE o.status <> 'cancelled'"
-        );
+             WHERE o.status <> 'cancelled'" . ($staffId === null ? '' : ' AND o.created_by = :snapshot_staff_id');
+        $snapshotStmt = $db->prepare($snapshotSql);
+        $snapshotStmt->execute($staffId === null ? [] : ['snapshot_staff_id' => $staffId]);
         $snapshotOutstanding = (float)$snapshotStmt->fetchColumn();
         $summary = ['Orders'=>(int)$orders['orders'],'Order value (KHR)'=>(float)$orders['total'],'Discounts (KHR)'=>(float)$orders['discounts'],'Payments received (KHR)'=>$received,'Refunds recorded (KHR)'=>$refunds,'Net received (KHR)'=>$received-$refunds,'Outstanding balance (KHR)'=>$outstanding];
         return ['summary'=>$summary,'statuses'=>$statuses,'methods'=>$methods,'services'=>$services,'snapshotOutstanding'=>$snapshotOutstanding];

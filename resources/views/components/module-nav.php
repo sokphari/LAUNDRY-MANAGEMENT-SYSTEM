@@ -7,6 +7,7 @@ $moduleItems = [
     ['label' => 'Audit Logs', 'path' => '/audit-logs', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'audit_logs.view', 'icon' => 'audit'],
     ['label' => 'Payments', 'path' => '/payments', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'payments.view', 'icon' => 'payments'],
     ['label' => 'Reports', 'path' => '/reports', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'reports.view', 'icon' => 'reports'],
+    ['label' => 'My Profile', 'path' => '/profile', 'available' => true, 'roles' => ['admin', 'staff'], 'icon' => 'profile'],
     ['label' => 'Users', 'path' => '/users', 'available' => true, 'roles' => ['admin', 'staff'], 'permission' => 'users.manage', 'icon' => 'users'],
 ];
 $currentRole = $user['role'] ?? '';
@@ -24,6 +25,7 @@ $iconMarkup = [
     'payments' => '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M7 15h4"/><path d="M7 5V3h12"/>',
     'reports' => '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/>',
+    'profile' => '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-3.8 3.1-5.8 7-5.8s6.5 2 7 5.8"/>',
 ];
 ?>
 <nav aria-label="Modules" class="mt-3 space-y-1">

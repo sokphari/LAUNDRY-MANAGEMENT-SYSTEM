@@ -108,7 +108,9 @@ const renderOrderStatus = (statuses, rangeLabel) => {
   });
   chart.setAttribute('aria-label', `Pie chart showing ${total} orders by status`);
   totalElement.textContent = total.toLocaleString('en-US');
-  document.querySelector('#dashboard-status-range').textContent = `Orders received: ${rangeLabel}`;
+  const staffDashboard = document.querySelector('#dashboard-personal-activities') !== null;
+  const statusTitle = staffDashboard ? 'My orders received' : 'Orders received';
+  document.querySelector('#dashboard-status-range').textContent = `${window.appTranslate ? window.appTranslate(statusTitle) : statusTitle}: ${rangeLabel}`;
 
   legend.replaceChildren();
   statuses.forEach((status) => {
@@ -128,16 +130,153 @@ const renderOrderStatus = (statuses, rangeLabel) => {
   });
 };
 
+const makeTableCell = (row, value, className = 'px-5 py-3') => {
+  const cell = document.createElement('td');
+  cell.className = className;
+  cell.textContent = value ?? '—';
+  row.append(cell);
+  return cell;
+};
+
+const emptyTableBody = (body, message, colspan) => {
+  const row = document.createElement('tr');
+  row.dataset.emptyState = '';
+  const cell = document.createElement('td');
+  cell.colSpan = colspan;
+  cell.className = 'px-5 py-8 text-center text-sm text-zinc-500';
+  cell.textContent = window.appTranslate ? window.appTranslate(message) : message;
+  row.append(cell);
+  body.replaceChildren(row);
+};
+
+const renderRoleSections = (data) => {
+  if (Array.isArray(data.recentActivities)) {
+    const activityBody = document.querySelector('#dashboard-personal-activities');
+    if (activityBody) {
+      activityBody.replaceChildren();
+      if (data.recentActivities.length === 0) {
+        const empty = document.createElement('p');
+        empty.dataset.emptyState = '';
+        empty.className = 'px-5 py-8 text-center text-sm text-zinc-500';
+        empty.textContent = 'No activity in this date range.';
+        activityBody.append(empty);
+      }
+      data.recentActivities.forEach((activity) => {
+        const item = document.createElement('div');
+        item.className = 'flex items-start justify-between gap-4 px-5 py-3';
+        const detail = document.createElement('div');
+        detail.className = 'min-w-0';
+        const summary = document.createElement('p');
+        summary.className = 'font-medium';
+        summary.textContent = activity.summary || '';
+        const action = document.createElement('p');
+        action.className = 'mt-1 text-xs text-zinc-500 dark:text-zinc-400';
+        const actionLabels = { 'order.created': 'Order Created', 'order.updated': 'Order Updated', 'order.status_changed': 'Status Changed', 'payment.recorded': 'Payment Recorded', 'refund.completed': 'Refund Completed', 'user.profile_updated': 'Profile Updated' };
+        const actionLabel = actionLabels[activity.action] || String(activity.action || '').replace(/[._]/g, ' ');
+        action.textContent = window.appTranslate ? window.appTranslate(actionLabel) : actionLabel;
+        detail.append(summary, action);
+        const time = document.createElement('time');
+        time.className = 'shrink-0 text-xs text-zinc-500 dark:text-zinc-400';
+        time.textContent = activity.created_display || '';
+        item.append(detail, time);
+        activityBody.append(item);
+      });
+    }
+
+    const paymentBody = document.querySelector('#dashboard-personal-payments');
+    if (paymentBody) {
+      paymentBody.replaceChildren();
+      if (data.personalPayments.length === 0) emptyTableBody(paymentBody, 'No payments recorded in this date range.', 4);
+      data.personalPayments.forEach((payment) => {
+        const row = document.createElement('tr');
+        const orderCell = makeTableCell(row, '');
+        const orderLink = document.createElement('a');
+        orderLink.href = `/orders/${encodeURIComponent(payment.order_id)}`;
+        orderLink.className = 'font-semibold text-primary hover:underline';
+        orderLink.textContent = payment.order_code || '';
+        orderCell.append(orderLink);
+        makeTableCell(row, payment.customer_name);
+        makeTableCell(row, String(payment.method || '').toUpperCase());
+        makeTableCell(row, `${Math.round(Number(payment.amount) || 0).toLocaleString('en-US')} KHR`, 'px-5 py-3 text-right font-semibold');
+        paymentBody.append(row);
+      });
+    }
+
+    const workBody = document.querySelector('#dashboard-personal-work');
+    if (workBody) {
+      workBody.replaceChildren();
+      if (data.personalWork.length === 0) emptyTableBody(workBody, 'No open orders created by you.', 4);
+      data.personalWork.forEach((workOrder) => {
+        const row = document.createElement('tr');
+        const orderCell = makeTableCell(row, '');
+        const orderLink = document.createElement('a');
+        orderLink.href = `/orders/${encodeURIComponent(workOrder.id)}`;
+        orderLink.className = 'font-semibold text-primary hover:underline';
+        orderLink.textContent = workOrder.order_code || '';
+        orderCell.append(orderLink);
+        makeTableCell(row, workOrder.customer_name);
+        const status = String(workOrder.status || '').charAt(0).toUpperCase() + String(workOrder.status || '').slice(1);
+        makeTableCell(row, window.appTranslate ? window.appTranslate(status) : status);
+        const pickup = new Date(String(workOrder.expected_pickup_at || '').replace(' ', 'T'));
+        makeTableCell(row, Number.isNaN(pickup.getTime()) ? '' : new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(pickup));
+        workBody.append(row);
+      });
+    }
+  }
+
+  const staffBody = document.querySelector('#dashboard-staff-activity');
+  if (staffBody && Array.isArray(data.staffActivities)) {
+    staffBody.replaceChildren();
+    if (data.staffActivities.length === 0) emptyTableBody(staffBody, 'No staff accounts found.', 6);
+    data.staffActivities.forEach((activity) => {
+      const row = document.createElement('tr');
+      const member = document.createElement('td');
+      member.className = 'px-5 py-3';
+      const name = document.createElement('span');
+      name.className = 'block font-semibold';
+      name.textContent = activity.full_name || '';
+      const username = document.createElement('span');
+      username.className = 'text-xs text-zinc-500';
+      username.textContent = `@${activity.username || ''}`;
+      member.append(name, username);
+      row.append(member);
+      makeTableCell(row, Number(activity.orders || 0).toLocaleString('en-US'));
+      makeTableCell(row, `${Math.round(Number(activity.payments) || 0).toLocaleString('en-US')} KHR`, 'px-5 py-3 font-semibold');
+      const latest = document.createElement('td');
+      latest.className = 'max-w-md px-5 py-3';
+      const summary = document.createElement('span');
+      summary.className = 'block truncate';
+      summary.title = activity.last_activity || '';
+      summary.textContent = activity.last_activity || '';
+      latest.append(summary);
+      row.append(latest);
+      makeTableCell(row, activity.last_activity_at, 'whitespace-nowrap px-5 py-3 text-zinc-500');
+      const linkCell = document.createElement('td');
+      linkCell.className = 'px-5 py-3 text-right';
+      const link = document.createElement('a');
+      link.className = 'font-semibold text-primary hover:underline';
+      link.href = `/audit-logs?user=${encodeURIComponent(activity.user_id)}`;
+      link.textContent = window.appTranslate ? window.appTranslate('View activity') : 'View activity';
+      linkCell.append(link);
+      row.append(linkCell);
+      staffBody.append(row);
+    });
+  }
+};
+
 const renderDashboard = (data) => {
+  const staffPeriod = document.querySelector('#dashboard-staff-period');
+  if (staffPeriod) staffPeriod.textContent = window.appTranslate ? window.appTranslate(data.rangeLabel) : data.rangeLabel;
   data.stats.forEach((stat, index) => {
     const card = document.querySelector(`[data-dashboard-stat="${index}"]`);
     if (!card) return;
-    card.querySelector('[data-dashboard-stat-label]').textContent = stat.label;
+    card.querySelector('[data-dashboard-stat-label]').textContent = window.appTranslate ? window.appTranslate(stat.label) : stat.label;
     card.querySelector('[data-dashboard-stat-value]').textContent = stat.value;
-    card.querySelector('[data-dashboard-stat-note]').textContent = stat.note;
+    card.querySelector('[data-dashboard-stat-note]').textContent = window.appTranslate ? window.appTranslate(stat.note) : stat.note;
   });
   renderRevenueChart(data.yearlyRevenue, data.selectedYear);
   renderOrderStatus(data.orderStatuses, data.rangeLabel);
+  renderRoleSections(data);
   document.querySelectorAll('[data-dashboard-custom-range] input').forEach((input) => {
     if (input.name === 'from') input.value = data.fromDate || '';
     if (input.name === 'to') input.value = data.toDate || '';
@@ -195,7 +334,8 @@ dashboardForm?.querySelectorAll('[data-dashboard-custom-range] input').forEach((
 dashboardReset?.addEventListener('click', () => {
   if (!dashboardForm || !dashboardRange) return;
   dashboardRange.value = 'today';
-  dashboardForm.querySelector('[name="year"]').value = dashboardForm.dataset.currentYear || '';
+  const yearSelect = dashboardForm.querySelector('[name="year"]');
+  if (yearSelect) yearSelect.value = dashboardForm.dataset.currentYear || '';
   dashboardForm.querySelector('[name="from"]').value = '';
   dashboardForm.querySelector('[name="to"]').value = '';
   updateDashboardCustomRange();

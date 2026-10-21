@@ -12,6 +12,7 @@ use App\Controllers\NotificationController;
 use App\Controllers\PaymentController;
 use App\Controllers\ReportController;
 use App\Controllers\UserAdminController;
+use App\Controllers\ProfileController;
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Middleware\RequireAuth;
@@ -108,6 +109,12 @@ $router->get('/account/security', static function () use ($databaseConfig): void
 });
 $router->post('/account/security', static function () use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig)) UserAdminController::changePassword($databaseConfig);
+});
+$router->get('/profile', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig)) ProfileController::show($databaseConfig);
+});
+$router->post('/profile', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig)) ProfileController::update($databaseConfig);
 });
 $router->get('/users/{id}/edit', static function (string $id) use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'users.manage')) UserAdminController::edit($id, $databaseConfig);

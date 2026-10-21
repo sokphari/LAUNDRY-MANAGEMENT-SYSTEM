@@ -16,11 +16,11 @@ final class User
         return $statement->fetch();
     }
 
-    /** @return array{id: int, full_name: string, username: string, email: ?string, role: string, password_hash: string, auth_version: int}|false */
+    /** @return array{id: int, full_name: string, gender: ?string, profile: ?string, username: string, email: ?string, role: string, password_hash: string, auth_version: int}|false */
     public static function findActiveByLogin(PDO $database, string $login): array|false
     {
         $statement = $database->prepare(
-            'SELECT id, full_name, username, email, role, password_hash, auth_version
+            'SELECT id, full_name, gender, profile, username, email, role, password_hash, auth_version
              FROM users
              WHERE is_active = 1 AND (username = :username OR email = :email)
              LIMIT 1'

@@ -26,7 +26,8 @@ final class DashboardController
         $toDate = self::validDate($_GET['to'] ?? null);
 
         try {
-            $dashboardData = DashboardService::data(Database::connect($databaseConfig), $requestedYear, $range, $fromDate, $toDate);
+            $actor = Auth::user();
+            $dashboardData = DashboardService::data(Database::connect($databaseConfig), $requestedYear, $range, $fromDate, $toDate, (int) ($actor['id'] ?? 0), (string) ($actor['role'] ?? 'staff'));
         } catch (PDOException $exception) {
             error_log('[dashboard] ' . $exception->getMessage());
             if (str_contains($_SERVER['HTTP_ACCEPT'] ?? '', 'application/json')) {
@@ -52,6 +53,7 @@ final class DashboardController
             'title' => 'Dashboard',
             'user' => Auth::user(),
             'csrfToken' => Csrf::token(),
+            'currentPath' => '/dashboard',
         ]);
     }
 

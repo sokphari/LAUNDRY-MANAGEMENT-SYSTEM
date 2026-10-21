@@ -2,10 +2,13 @@
 $profileName = (string) ($user['full_name'] ?? $user['username'] ?? 'User');
 $profileUsername = (string) ($user['username'] ?? '');
 $profileInitial = strtoupper(substr($profileName, 0, 1));
+$profileImage = is_string($user['profile'] ?? null) ? $user['profile'] : '';
+$profileImageUrl = filter_var($profileImage, FILTER_VALIDATE_URL) !== false && in_array(strtolower((string) parse_url($profileImage, PHP_URL_SCHEME)), ['http', 'https'], true) && !parse_url($profileImage, PHP_URL_USER) && !parse_url($profileImage, PHP_URL_PASS);
+$profileImageLocal = preg_match('~\\A/uploads/profiles/[a-f0-9]{32}\\.(?:jpg|png|webp|gif)\\z~', $profileImage) === 1;
 ?>
 <details class="profile-menu relative">
     <summary class="flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-zinc-200 bg-white py-1 pl-1 pr-2 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 sm:gap-3 sm:pr-3">
-        <span class="grid size-8 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white" aria-hidden="true"><?= e($profileInitial) ?></span>
+        <?php if ($profileImageUrl || $profileImageLocal): ?><img src="<?= e($profileImage) ?>" alt="" class="size-8 shrink-0 rounded-full border border-zinc-200 object-cover dark:border-zinc-700"><?php else: ?><span class="grid size-8 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white" aria-hidden="true"><?= e($profileInitial) ?></span><?php endif; ?>
         <span class="hidden min-w-0 text-left sm:block">
             <span class="block max-w-28 truncate text-sm font-semibold leading-4"><?= e($profileName) ?></span>
             <span class="mt-0.5 block text-xs capitalize leading-3 text-zinc-500 dark:text-zinc-400"><?= e(t(ucfirst((string) ($user['role'] ?? '')))) ?></span>
@@ -20,6 +23,7 @@ $profileInitial = strtoupper(substr($profileName, 0, 1));
             <p class="mt-1 text-xs capitalize text-zinc-500 dark:text-zinc-400"><?= e(t(ucfirst((string) ($user['role'] ?? '')))) ?></p>
         </div>
         <div class="border-b border-zinc-200 py-1 dark:border-zinc-700">
+            <a href="/profile" class="block px-4 py-2.5 text-sm font-medium hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary dark:hover:bg-zinc-800"><?= e(t('My Profile')) ?></a>
             <a href="/account/security" class="block px-4 py-2.5 text-sm font-medium hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-primary dark:hover:bg-zinc-800"><?= e(t('Account Security')) ?></a>
         </div>
         <form method="post" action="/logout" class="p-1">

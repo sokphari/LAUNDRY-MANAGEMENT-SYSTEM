@@ -63,7 +63,8 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
   const addButton = form.querySelector('[data-add-order-item]');
   const totalOutput = form.querySelector('[data-order-total]');
   const subtotalOutput = form.querySelector('[data-order-subtotal]');
-  const itemCountOutput = form.querySelector('[data-order-item-count]');
+  const itemCountOutput = form.querySelector('[data-order-item-count-value]');
+  const summaryItems = form.querySelector('[data-order-summary-items]');
   const balanceOutput = form.querySelector('[data-order-balance]');
   const depositInput = form.querySelector('[data-order-deposit]');
   if (!rows || !template || !addButton || !totalOutput) return;
@@ -97,13 +98,62 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
   const updateTotal = () => {
     let total = 0;
     let itemCount = 0;
-    rows.querySelectorAll('[data-order-item]').forEach((row) => {
+    const selectedItems = [];
+    rows.querySelectorAll('[data-order-item]').forEach((row, index) => {
+      const rowNumber = row.querySelector('[data-order-row-number]');
+      if (rowNumber) rowNumber.textContent = String(index + 1);
       total += updateRow(row);
-      if (row.querySelector('[data-service-select]')?.value) itemCount += 1;
+      const select = row.querySelector('[data-service-select]');
+      if (select?.value) {
+        itemCount += 1;
+        const option = select.selectedOptions[0];
+        const quantity = row.querySelector('[data-order-quantity]');
+        const unit = option?.dataset.unit || '';
+        const unitPrice = Number(option?.dataset.price || 0);
+        const serviceName = (option?.textContent || '').split(' · ')[0].trim();
+        selectedItems.push({ serviceName, quantity: Number(quantity?.value || 0), unit, unitPrice, total: unitPrice * Number(quantity?.value || 0) });
+      }
     });
     totalOutput.textContent = money(total);
     if (subtotalOutput) subtotalOutput.textContent = money(total);
     if (itemCountOutput) itemCountOutput.textContent = String(itemCount);
+    if (summaryItems) {
+      summaryItems.replaceChildren();
+      if (selectedItems.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'rounded-lg bg-zinc-50 px-3 py-4 text-center text-sm text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400';
+        empty.textContent = 'No services selected yet.';
+        summaryItems.append(empty);
+      } else {
+        selectedItems.forEach((item) => {
+          const line = document.createElement('div');
+          line.className = 'flex items-center justify-between gap-3 rounded-lg bg-zinc-50 p-3 dark:bg-zinc-900';
+          const detail = document.createElement('div');
+          detail.className = 'flex min-w-0 items-center gap-3';
+          const icon = document.createElement('span');
+          icon.className = 'grid size-9 shrink-0 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white';
+          icon.setAttribute('aria-hidden', 'true');
+          icon.textContent = '◈';
+          const description = document.createElement('div');
+          description.className = 'min-w-0';
+          const name = document.createElement('p');
+          name.className = 'truncate text-sm font-medium';
+          name.textContent = item.serviceName || 'Service';
+          const quantity = document.createElement('p');
+          quantity.className = 'text-xs text-zinc-500 dark:text-zinc-400';
+          const quantityText = item.quantity.toLocaleString('en-US', { maximumFractionDigits: 3 });
+          const priceText = item.unitPrice.toLocaleString('en-US', { maximumFractionDigits: 2 });
+          quantity.textContent = `${quantityText} ${item.unit} × ${priceText} KHR`;
+          description.append(name, quantity);
+          detail.append(icon, description);
+          const amount = document.createElement('strong');
+          amount.className = 'shrink-0 text-right text-sm font-semibold';
+          amount.textContent = money(item.total);
+          line.append(detail, amount);
+          summaryItems.append(line);
+        });
+      }
+    }
     if (depositInput) depositInput.max = total.toFixed(2);
     if (balanceOutput) balanceOutput.textContent = money(Math.max(0, total - Number(depositInput?.value || 0)));
     const atLimit = rows.querySelectorAll('[data-order-item]').length >= maxItems;
@@ -116,7 +166,7 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
   const addRow = () => {
     if (rows.querySelectorAll('[data-order-item]').length >= maxItems) return;
     const markup = template.innerHTML.replaceAll('__INDEX__', String(nextIndex++));
-    const wrapper = document.createElement('div');
+    const wrapper = document.createElement('tbody');
     wrapper.innerHTML = markup;
     const row = wrapper.firstElementChild;
     if (row) rows.append(row);
@@ -200,6 +250,20 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
   });
   depositInput?.addEventListener('input', updateTotal);
   rows.addEventListener('click', (event) => {
+    const stepButton = event.target.closest('[data-quantity-step]');
+    if (stepButton) {
+      const row = stepButton.closest('[data-order-item]');
+      const quantity = row?.querySelector('[data-order-quantity]');
+      if (!quantity) return;
+      const direction = Number(stepButton.dataset.quantityStep) < 0 ? -1 : 1;
+      const step = Number(quantity.step) || 1;
+      const minimum = Number(quantity.min) || step;
+      const current = quantity.value === '' ? 0 : Number(quantity.value);
+      const next = Math.max(minimum, Math.round((current + direction * step) * 1000) / 1000);
+      quantity.value = String(next);
+      quantity.dispatchEvent(new Event('input', { bubbles: true }));
+      return;
+    }
     const remove = event.target.closest('[data-remove-order-item]');
     if (!remove) return;
     const itemRows = rows.querySelectorAll('[data-order-item]');

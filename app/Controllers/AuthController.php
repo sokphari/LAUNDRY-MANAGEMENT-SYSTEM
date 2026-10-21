@@ -107,6 +107,8 @@ final class AuthController
         Auth::login([
             'id' => $user['id'],
             'full_name' => $user['full_name'],
+            'gender' => $user['gender'],
+            'profile' => $user['profile'],
             'username' => $user['username'],
             'email' => $user['email'],
             'role' => $user['role'],

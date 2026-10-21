@@ -6,6 +6,7 @@ $toneStyles = [
     'amber' => ['icon' => 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300', 'dot' => 'bg-amber-500'],
 ];
 $statusTotal = array_sum(array_column($orderStatuses, 'value'));
+$isStaffDashboard = (bool) ($isStaffDashboard ?? false);
 $circumference = 2 * pi() * 36;
 $statusOffset = 0.0;
 $chartPoints = [];
@@ -45,9 +46,13 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
 <section class="space-y-5">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
-            <p class="text-sm font-semibold uppercase tracking-widest text-primary">Overview</p>
-            <h2 class="mt-2 text-3xl font-bold tracking-tight">Welcome, <?= e($user['full_name'] ?? '') ?></h2>
-            <p class="mt-2 text-zinc-600 dark:text-zinc-300">Here is what is happening in your laundry shop.</p>
+            <p class="text-sm font-semibold uppercase tracking-widest text-primary"><?= e(t('Overview')) ?></p>
+            <?php if ($isStaffDashboard): ?>
+                <h2 class="mt-2 text-3xl font-bold tracking-tight"><?= e(t('My Work Overview')) ?> · <span id="dashboard-staff-period"><?= e(t($rangeLabel)) ?></span></h2>
+            <?php else: ?>
+                <h2 class="mt-2 text-3xl font-bold tracking-tight"><?= e(t('Welcome, {name}', ['name' => $user['full_name'] ?? ''])) ?></h2>
+            <?php endif; ?>
+            <p class="mt-2 text-zinc-600 dark:text-zinc-300"><?= $isStaffDashboard ? e(t('Your dashboard shows your own work and activity. Use Orders and Payments to help with any shop order.')) : e(t('Store overview and staff activity for the selected date range.')) ?></p>
         </div>
         <?php $dashboardNow = new DateTimeImmutable('now'); ?>
         <aside class="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800" aria-label="Current Cambodia date and time">
@@ -61,10 +66,10 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
         </aside>
     </div>
 
-    <form id="dashboard-filter-form" method="get" action="/dashboard" data-current-year="<?= e($years[0]) ?>" class="grid w-full gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:grid-cols-2 xl:grid-cols-3 dark:bg-dark-card dark:ring-zinc-800">
+    <form id="dashboard-filter-form" method="get" action="/dashboard" data-current-year="<?= e($years[0]) ?>" class="grid w-full gap-4 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:grid-cols-2 <?= $isStaffDashboard ? 'xl:grid-cols-4' : 'xl:grid-cols-3' ?> dark:bg-dark-card dark:ring-zinc-800">
             <div>
                 <label for="dashboard-range" class="mb-2 block text-sm font-medium">Date range</label>
-                <select id="dashboard-range" name="range" data-dashboard-range class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
+                <select id="dashboard-range" name="range" data-dashboard-range class="h-11 w-full rounded-lg border border-zinc-300 bg-white px-3 dark:border-zinc-700 dark:bg-zinc-900">
                     <option value="today" <?= $selectedRange === 'today' ? 'selected' : '' ?>>Today</option>
                     <option value="yesterday" <?= $selectedRange === 'yesterday' ? 'selected' : '' ?>>Yesterday</option>
                     <option value="week" <?= $selectedRange === 'week' ? 'selected' : '' ?>>This week</option>
@@ -83,17 +88,25 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
                     </div>
                 </div>
             </div>
-            <div>
+            <?php if (!$isStaffDashboard): ?><div>
                 <label for="revenue-year" class="mb-2 block text-sm font-medium">Chart year</label>
                 <select id="revenue-year" name="year" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
                     <?php foreach ($years as $year): ?>
                         <option value="<?= e($year) ?>" <?= $year === $selectedYear ? 'selected' : '' ?>><?= e($year) ?></option>
                     <?php endforeach; ?>
                 </select>
-            </div>
+            </div><?php endif; ?>
             <div class="flex items-end">
-                <button type="button" data-dashboard-reset class="w-full rounded-lg border border-zinc-300 px-4 py-2.5 text-sm font-semibold hover:border-primary hover:text-primary dark:border-zinc-700">Reset</button>
+                <button type="button" data-dashboard-reset class="h-11 w-full rounded-lg border border-zinc-300 px-4 text-sm font-semibold hover:border-primary hover:text-primary dark:border-zinc-700">Reset</button>
             </div>
+            <?php if ($isStaffDashboard): ?>
+                <div class="flex items-end"><a href="/orders/create" class="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 text-center text-sm font-semibold text-white transition hover:bg-violet-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <span class="text-lg leading-none" aria-hidden="true">+</span><span><?= e(t('New Order')) ?></span>
+                </a></div>
+                <div class="flex items-end"><a href="/orders" class="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-violet-100 px-4 text-center text-sm font-semibold text-violet-900 transition hover:bg-violet-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary dark:bg-violet-950 dark:text-violet-200 dark:hover:bg-violet-900">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path stroke-linecap="round" d="m16 16 4.5 4.5"/></svg><span><?= e(t('Find Order')) ?></span>
+                </a></div>
+            <?php endif; ?>
         </form>
     <p id="dashboard-filter-status" class="sr-only" role="status" aria-live="polite"></p>
 
@@ -103,23 +116,28 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
             <article data-dashboard-stat="<?= e($index) ?>" class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
                 <div class="flex items-start justify-between gap-3">
                     <div>
-                        <p data-dashboard-stat-label class="text-sm font-medium text-zinc-500 dark:text-zinc-400"><?= e($stat['label']) ?></p>
+                        <p data-dashboard-stat-label class="text-sm font-medium text-zinc-500 dark:text-zinc-400"><?= e(t($stat['label'])) ?></p>
                         <p data-dashboard-stat-value class="mt-3 text-2xl font-bold tracking-tight"><?= e($stat['value']) ?></p>
                     </div>
                     <span class="grid size-10 place-items-center rounded-xl <?= e($tone['icon']) ?>" aria-hidden="true">
-                        <?php if ($index === 0): ?>♙<?php elseif ($index === 1): ?>៛<?php elseif ($index === 2): ?>▤<?php else: ?>◷<?php endif; ?>
+                        <?php if ($isStaffDashboard && $index === 0): ?><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 4.75H6.75A1.75 1.75 0 0 0 5 6.5v13A1.75 1.75 0 0 0 6.75 21h10.5A1.75 1.75 0 0 0 19 19.5v-13a1.75 1.75 0 0 0-1.75-1.75H15M9 4.75a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2m-6 0a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M12 10v6m-3-3h6"/></svg>
+                        <?php elseif ($isStaffDashboard && $index === 1): ?><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 9h16m-4 5h2m-12-9V3m12 2V3"/></svg>
+                        <?php elseif ($isStaffDashboard && $index === 2): ?><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7v5h-5M4 17v-5h5m10.2-2A7 7 0 0 0 7.1 6L5 8m14 8-2.1 2a7 7 0 0 1-12.1-4"/></svg>
+                        <?php elseif ($isStaffDashboard): ?><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 9 8-4.5M12 12v9m0-9L4 7.5m12 6 2 2 4-4"/></svg>
+                        <?php elseif ($index === 0): ?>♙<?php elseif ($index === 1): ?>៛<?php elseif ($index === 2): ?>▤<?php else: ?>◷<?php endif; ?>
                     </span>
                 </div>
-                <p class="mt-3 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400"><span class="size-1.5 shrink-0 rounded-full <?= e($tone['dot']) ?>"></span><span data-dashboard-stat-note><?= e($stat['note']) ?></span></p>
+                <p class="mt-3 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400"><span class="size-1.5 shrink-0 rounded-full <?= e($tone['dot']) ?>"></span><span data-dashboard-stat-note><?= e(t($stat['note'])) ?></span></p>
             </article>
         <?php endforeach; ?>
     </div>
 
-    <div class="grid gap-5 xl:grid-cols-5 xl:items-start">
+    <?php if (!$isStaffDashboard): ?>
+    <div class="grid items-stretch gap-5 xl:grid-cols-5">
         <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-3 dark:bg-dark-card dark:ring-zinc-800">
             <div class="flex flex-wrap items-start justify-between gap-2">
                 <div>
-                    <h3 class="text-lg font-semibold">Net payments by month in <?= e($selectedYear) ?></h3>
+                    <h3 class="text-lg font-semibold"><?= $isStaffDashboard ? e(t('My net payments by month in')) : e(t('Net payments by month in')) ?> <?= e($selectedYear) ?></h3>
                     <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Payments minus refunds · KHR</p>
                 </div>
             </div>
@@ -156,7 +174,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
         <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-2 dark:bg-dark-card dark:ring-zinc-800">
             <div>
                 <h3 class="text-lg font-semibold">Order status</h3>
-                <p id="dashboard-status-range" class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Orders received: <?= e($rangeLabel) ?></p>
+                <p id="dashboard-status-range" class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= $isStaffDashboard ? e(t('My orders received')) : e(t('Orders received')) ?>: <?= e($rangeLabel) ?></p>
             </div>
             <div class="mt-4 flex flex-row items-center justify-center gap-3 sm:justify-start sm:gap-4">
                 <div class="relative size-32 shrink-0 sm:size-40">
@@ -186,4 +204,39 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
             </div>
         </article>
     </div>
+    <?php endif; ?>
+
+    <?php if ($isStaffDashboard): ?>
+        <div class="grid gap-5 xl:grid-cols-2">
+            <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
+                <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('My recent activity')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Actions you performed in the selected period.')) ?></p></div>
+                <div class="divide-y divide-zinc-100 dark:divide-zinc-800" id="dashboard-personal-activities">
+                    <?php foreach ($recentActivities as $activity): ?><div class="flex items-start justify-between gap-4 px-5 py-3"><div class="min-w-0"><p class="font-medium"><?= e($activity['summary']) ?></p><p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t(ucwords(str_replace(['.', '_'], ' ', (string) $activity['action'])))) ?></p></div><time class="shrink-0 text-xs text-zinc-500 dark:text-zinc-400"><?= e($activity['created_display']) ?></time></div><?php endforeach; ?>
+                    <?php if ($recentActivities === []): ?><p data-empty-state class="px-5 py-8 text-center text-sm text-zinc-500"><?= e(t('No activity in this date range.')) ?></p><?php endif; ?>
+                </div>
+            </article>
+            <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
+                <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('My payments')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Payments you recorded in the selected period.')) ?></p></div>
+                <div class="overflow-x-auto"><table class="w-full min-w-[520px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Method')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Amount')) ?></th></tr></thead><tbody id="dashboard-personal-payments" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    <?php foreach ($personalPayments as $payment): ?><tr><td class="px-5 py-3"><a class="font-semibold text-primary hover:underline" href="/orders/<?= (int) $payment['order_id'] ?>"><?= e($payment['order_code']) ?></a></td><td class="px-5 py-3"><?= e($payment['customer_name']) ?></td><td class="px-5 py-3"><?= e(strtoupper((string) $payment['method'])) ?></td><td class="px-5 py-3 text-right font-semibold"><?= e(format_khr((float) $payment['amount'])) ?> KHR</td></tr><?php endforeach; ?>
+                    <?php if ($personalPayments === []): ?><tr data-empty-state><td colspan="4" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No payments recorded in this date range.')) ?></td></tr><?php endif; ?>
+                </tbody></table></div>
+            </article>
+        </div>
+        <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
+            <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('My open orders')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Open orders you created. You can still work on any order from the Orders module.')) ?></p></div>
+            <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Status')) ?></th><th class="px-5 py-3"><?= e(t('Pickup date')) ?></th></tr></thead><tbody id="dashboard-personal-work" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <?php foreach ($personalWork as $workOrder): ?><tr><td class="px-5 py-3"><a class="font-semibold text-primary hover:underline" href="/orders/<?= (int) $workOrder['id'] ?>"><?= e($workOrder['order_code']) ?></a></td><td class="px-5 py-3"><?= e($workOrder['customer_name']) ?></td><td class="px-5 py-3"><?= e(t(ucfirst((string) $workOrder['status']))) ?></td><td class="px-5 py-3"><?= e(date('d M Y', strtotime((string) $workOrder['expected_pickup_at']))) ?></td></tr><?php endforeach; ?>
+                <?php if ($personalWork === []): ?><tr data-empty-state><td colspan="4" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No open orders created by you.')) ?></td></tr><?php endif; ?>
+            </tbody></table></div>
+        </article>
+    <?php else: ?>
+        <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
+            <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('Staff activity')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Orders, payments, and latest recorded action by staff for the selected period.')) ?></p></div>
+            <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Staff member')) ?></th><th class="px-5 py-3"><?= e(t('Orders created')) ?></th><th class="px-5 py-3"><?= e(t('Net payments recorded')) ?></th><th class="px-5 py-3"><?= e(t('Latest activity')) ?></th><th class="px-5 py-3"><?= e(t('Date & time')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Details')) ?></th></tr></thead><tbody id="dashboard-staff-activity" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <?php foreach ($staffActivities as $activity): ?><tr><td class="px-5 py-3"><span class="block font-semibold"><?= e($activity['full_name']) ?></span><span class="text-xs text-zinc-500">@<?= e($activity['username']) ?></span></td><td class="px-5 py-3"><?= e($activity['orders']) ?></td><td class="px-5 py-3 font-semibold"><?= e(format_khr((float) $activity['payments'])) ?> KHR</td><td class="max-w-md px-5 py-3"><span class="block truncate" title="<?= e($activity['last_activity']) ?>"><?= e($activity['last_activity']) ?></span></td><td class="whitespace-nowrap px-5 py-3 text-zinc-500"><?= e($activity['last_activity_at']) ?></td><td class="px-5 py-3 text-right"><a class="font-semibold text-primary hover:underline" href="/audit-logs?user=<?= (int) $activity['user_id'] ?>"><?= e(t('View activity')) ?></a></td></tr><?php endforeach; ?>
+                <?php if ($staffActivities === []): ?><tr data-empty-state><td colspan="6" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No staff accounts found.')) ?></td></tr><?php endif; ?>
+            </tbody></table></div>
+        </article>
+    <?php endif; ?>
 </section>

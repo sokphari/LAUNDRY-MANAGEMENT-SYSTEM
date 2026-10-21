@@ -35,6 +35,7 @@ final class AuditLogController
         'auth.logout' => 'User Signed Out',
         'user.created' => 'User Created',
         'user.updated' => 'User Updated',
+        'user.profile_updated' => 'Profile Updated',
         'user.role_changed' => 'User Role Changed',
         'user.enabled' => 'User Enabled',
         'user.disabled' => 'User Disabled',
@@ -71,6 +72,12 @@ final class AuditLogController
         }
 
         $filters = ['q' => $query, 'action' => $action, 'module' => $module, 'user' => $userId, 'from' => $from, 'to' => $to];
+        $actor = Auth::user();
+        $isStaff = ($actor['role'] ?? 'admin') !== 'admin';
+        if ($isStaff) {
+            $userId = (int) ($actor['id'] ?? 0);
+            $filters['user'] = $userId;
+        }
         $requestedPage = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT);
         $page = max(1, is_int($requestedPage) ? $requestedPage : 1);
         $perPage = 10;
@@ -78,6 +85,7 @@ final class AuditLogController
         try {
             $database = Database::connect($databaseConfig);
             $staff = AuditLog::staffOptions($database);
+            if ($isStaff) $staff = array_values(array_filter($staff, static fn (array $person): bool => (int) $person['id'] === $userId));
             if ($userId !== '' && !in_array($userId, array_map(static fn (array $person): int => (int) $person['id'], $staff), true)) {
                 $userId = '';
                 $filters['user'] = '';
@@ -131,7 +139,7 @@ final class AuditLogController
         if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created', 'service.activated'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if (in_array($action, ['auth.login', 'user.created', 'user.enabled'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if ($action === 'order.status_changed') return 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
-        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated', 'user.updated', 'user.role_changed', 'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated', 'user.updated', 'user.profile_updated', 'user.role_changed', 'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
         if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated', 'auth.login_failed', 'user.disabled'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
         return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
     }
