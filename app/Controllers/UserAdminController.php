@@ -43,6 +43,7 @@ final class UserAdminController
             $stmt->execute($values);
             $id=(int)$db->lastInsertId();
             AuditLog::record($db,(int)(Auth::user()['id']??0),'user.created','user',$id,'Created user '.$values['username'],['role'=>$values['role'],'is_active'=>true]);
+            $db->prepare('INSERT INTO user_notification_reads (user_id, last_read_audit_id) SELECT :user_id, COALESCE(MAX(id), 0) FROM audit_logs')->execute(['user_id'=>$id]);
             $db->commit();
             self::flash('success','User account created.'); header('Location: /users',true,303);
         } catch (PDOException $e) { if($db->inTransaction())$db->rollBack(); self::renderForm('Create user',$values,'/users/create',self::isDuplicate($e)?'Username or email is already in use.':'Could not create this user.'); }

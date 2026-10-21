@@ -98,8 +98,13 @@ try {
         'INSERT INTO users (full_name, username, email, password_hash, role, is_active)
          VALUES (:full_name, :username, :email, :password_hash, :role, 1)'
     );
+    $insertReadCursor = $database->prepare(
+        'INSERT INTO user_notification_reads (user_id, last_read_audit_id)
+         SELECT :user_id, COALESCE(MAX(id), 0) FROM audit_logs'
+    );
     foreach ([$admin, $staff] as $account) {
         $insert->execute($account);
+        $insertReadCursor->execute(['user_id' => (int) $database->lastInsertId()]);
     }
     $database->commit();
 } catch (Throwable $exception) {

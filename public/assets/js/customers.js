@@ -4,6 +4,7 @@
   const rows = document.getElementById('customer-rows');
   const status = document.getElementById('customer-search-status');
   const resultCount = document.getElementById('customer-result-count');
+  const pagination = document.getElementById('customer-pagination');
 
   if (!form || !input || !rows || !status) return;
 
@@ -70,7 +71,55 @@
     rows.replaceChildren(row);
   };
 
-  const renderCustomers = (customers, query) => {
+  const makePageLink = (label, page, currentPage, disabled = false, ariaLabel = '') => {
+    const link = document.createElement('a');
+    link.href = `/customers?${new URLSearchParams({ q: input.value.trim(), page: String(page) })}`;
+    link.dataset.customerPage = String(page);
+    link.className = `rounded-md border px-3 py-1.5 text-sm ${page === currentPage ? 'border-primary bg-violet-50 font-semibold text-primary dark:bg-violet-950/50' : 'border-zinc-200 hover:border-primary hover:text-primary dark:border-zinc-700'}${disabled ? ' pointer-events-none opacity-50' : ''}`;
+    link.textContent = label;
+    if (ariaLabel) link.setAttribute('aria-label', ariaLabel);
+    if (disabled) {
+      link.setAttribute('aria-disabled', 'true');
+      link.tabIndex = -1;
+    }
+    if (page === currentPage && !ariaLabel) link.setAttribute('aria-current', 'page');
+    return link;
+  };
+
+  const renderPagination = (page, totalPages) => {
+    if (!pagination) return;
+    pagination.replaceChildren();
+    pagination.append(makePageLink('Previous', Math.max(1, page - 1), page, page <= 1, 'Previous page'));
+
+    const first = Math.max(1, page - 2);
+    const last = Math.min(totalPages, page + 2);
+    if (first > 1) {
+      pagination.append(makePageLink('1', 1, page));
+      if (first > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-1 text-zinc-500';
+        ellipsis.textContent = '…';
+        ellipsis.setAttribute('aria-hidden', 'true');
+        pagination.append(ellipsis);
+      }
+    }
+    for (let number = first; number <= last; number += 1) {
+      pagination.append(makePageLink(String(number), number, page));
+    }
+    if (last < totalPages) {
+      if (last < totalPages - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.className = 'px-1 text-zinc-500';
+        ellipsis.textContent = '…';
+        ellipsis.setAttribute('aria-hidden', 'true');
+        pagination.append(ellipsis);
+      }
+      pagination.append(makePageLink(String(totalPages), totalPages, page));
+    }
+    pagination.append(makePageLink('Next', Math.min(totalPages, page + 1), page, page >= totalPages, 'Next page'));
+  };
+
+  const renderCustomers = (customers, query, page, total, totalPages) => {
     rows.replaceChildren();
 
     if (customers.length === 0) {
@@ -81,7 +130,7 @@
         if (!/^\d+$/.test(id)) return;
         const name = String(customer.name ?? '');
         const row = document.createElement('tr');
-        row.append(makeCell(String(index + 1), 'px-5 py-4 text-zinc-500 dark:text-zinc-400'));
+        row.append(makeCell(String((page - 1) * 10 + index + 1), 'px-5 py-4 text-zinc-500 dark:text-zinc-400'));
         row.append(makeCell(name, 'px-5 py-4 font-medium'));
         row.append(makeCell(String(customer.phone ?? ''), 'px-5 py-4 whitespace-nowrap'));
         row.append(makeCell(String(customer.address ?? '') || '—', 'max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300'));
@@ -121,18 +170,22 @@
     }
 
     if (resultCount) {
-      resultCount.textContent = `Showing ${customers.length} customer${customers.length === 1 ? '' : 's'}${query ? ' matching your search' : ''}${customers.length === 100 ? ' (maximum shown)' : ''}.`;
+      const first = total > 0 ? ((page - 1) * 10) + 1 : 0;
+      const last = Math.min(page * 10, total);
+      resultCount.textContent = `Showing ${first}–${last} of ${total} customer${total === 1 ? '' : 's'}${query ? ' matching your search' : ''}.`;
     }
-    status.textContent = `${customers.length} customer${customers.length === 1 ? '' : 's'} found.`;
+    renderPagination(page, totalPages);
+    status.textContent = `${total} customer${total === 1 ? '' : 's'} found. Page ${page} of ${totalPages}.`;
   };
 
-  const search = async () => {
+  const search = async (page = 1) => {
     const query = input.value.trim();
     activeRequest?.abort();
     activeRequest = new AbortController();
 
     const url = new URL('/customers/search', window.location.origin);
     if (query) url.searchParams.set('q', query);
+    url.searchParams.set('page', String(page));
 
     status.textContent = 'Searching customers…';
     try {
@@ -143,11 +196,19 @@
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Search failed. Please try again.');
-      renderCustomers(Array.isArray(result.customers) ? result.customers : [], query);
+      renderCustomers(
+        Array.isArray(result.customers) ? result.customers : [],
+        query,
+        Number(result.page) || 1,
+        Number(result.total) || 0,
+        Number(result.total_pages) || 1,
+      );
 
       const pageUrl = new URL(window.location.href);
       if (query) pageUrl.searchParams.set('q', query);
       else pageUrl.searchParams.delete('q');
+      if (Number(result.page) > 1) pageUrl.searchParams.set('page', String(result.page));
+      else pageUrl.searchParams.delete('page');
       window.history.replaceState({}, '', pageUrl);
     } catch (error) {
       if (error.name === 'AbortError') return;
@@ -158,12 +219,19 @@
 
   input.addEventListener('input', () => {
     window.clearTimeout(debounceTimer);
-    debounceTimer = window.setTimeout(search, 250);
+    debounceTimer = window.setTimeout(() => search(1), 250);
   });
 
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     window.clearTimeout(debounceTimer);
-    search();
+    search(1);
+  });
+
+  pagination?.addEventListener('click', (event) => {
+    const link = event.target.closest('[data-customer-page]');
+    if (!link || link.getAttribute('aria-disabled') === 'true') return;
+    event.preventDefault();
+    search(Number(link.dataset.customerPage) || 1);
   });
 })();

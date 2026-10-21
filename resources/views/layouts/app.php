@@ -16,6 +16,7 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     <script src="/assets/js/orders.js" defer></script>
     <script src="/assets/js/payments.js" defer></script>
     <script src="/assets/js/dashboard.js" defer></script>
+    <script src="/assets/js/notifications.js" defer></script>
 </head>
 <body class="min-h-screen bg-[#F8FAFC] text-zinc-900 dark:bg-dark-base dark:text-white">
     <button id="sidebar-backdrop" type="button" aria-label="Close navigation" class="fixed inset-0 z-30 hidden bg-black/50 md:hidden"></button>

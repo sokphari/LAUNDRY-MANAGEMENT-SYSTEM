@@ -14,14 +14,20 @@ use PDOException;
 
 final class CustomerController
 {
+    private const PER_PAGE = 10;
+
     /** @param array<string, mixed> $databaseConfig */
     public static function index(array $databaseConfig): void
     {
         $query = isset($_GET['q']) && is_string($_GET['q']) ? trim($_GET['q']) : '';
+        $page = self::requestedPage();
         try {
-            $customers = $query === ''
-                ? Customer::all(Database::connect($databaseConfig))
-                : Customer::search(Database::connect($databaseConfig), $query);
+            $result = Customer::paginate(Database::connect($databaseConfig), $query, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+            $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
+            $page = min($page, $totalPages);
+            if ($page !== self::requestedPage()) {
+                $result = Customer::paginate(Database::connect($databaseConfig), $query, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+            }
         } catch (PDOException $exception) {
             self::logDatabaseError($exception);
             self::renderError(self::databaseErrorMessage($exception, 'load'));
@@ -30,8 +36,12 @@ final class CustomerController
 
         View::render('customers/index', self::sharedData() + [
             'title' => 'Customers',
-            'customers' => $customers,
+            'customers' => $result['customers'],
             'query' => $query,
+            'page' => $page,
+            'perPage' => self::PER_PAGE,
+            'total' => $result['total'],
+            'totalPages' => $totalPages,
             'flash' => self::takeFlash(),
         ]);
     }
@@ -42,12 +52,23 @@ final class CustomerController
         header('Content-Type: application/json; charset=utf-8');
         header('Cache-Control: no-store');
         $query = isset($_GET['q']) && is_string($_GET['q']) ? trim($_GET['q']) : '';
+        $page = self::requestedPage();
 
         try {
-            $customers = $query === ''
-                ? Customer::all(Database::connect($databaseConfig))
-                : Customer::search(Database::connect($databaseConfig), $query);
-            echo json_encode(['customers' => $customers], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+            $database = Database::connect($databaseConfig);
+            $result = Customer::paginate($database, $query, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+            $totalPages = max(1, (int) ceil($result['total'] / self::PER_PAGE));
+            $page = min($page, $totalPages);
+            if ($page !== self::requestedPage()) {
+                $result = Customer::paginate($database, $query, self::PER_PAGE, ($page - 1) * self::PER_PAGE);
+            }
+            echo json_encode([
+                'customers' => $result['customers'],
+                'page' => $page,
+                'per_page' => self::PER_PAGE,
+                'total' => $result['total'],
+                'total_pages' => $totalPages,
+            ], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
         } catch (PDOException $exception) {
             self::logDatabaseError($exception);
             http_response_code(500);
@@ -235,6 +256,12 @@ final class CustomerController
     private static function postString(string $key): string
     {
         return isset($_POST[$key]) && is_string($_POST[$key]) ? trim($_POST[$key]) : '';
+    }
+
+    private static function requestedPage(): int
+    {
+        $requested = filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT);
+        return max(1, is_int($requested) ? $requested : 1);
     }
 
     /** @param array{name: string, phone: string, address: string, notes: string} $customer

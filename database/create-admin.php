@@ -67,6 +67,7 @@ if (!hash_equals($password, $passwordConfirmation)) {
 }
 
 try {
+    $database->beginTransaction();
     $statement = $database->prepare(
         'INSERT INTO users (full_name, username, email, password_hash, role, is_active)
          VALUES (:full_name, :username, :email, :password_hash, :role, 1)'
@@ -78,7 +79,13 @@ try {
         'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         'role' => 'admin',
     ]);
+    $database->prepare('INSERT INTO user_notification_reads (user_id, last_read_audit_id) SELECT :user_id, COALESCE(MAX(id), 0) FROM audit_logs')
+        ->execute(['user_id' => (int) $database->lastInsertId()]);
+    $database->commit();
 } catch (PDOException $exception) {
+    if ($database->inTransaction()) {
+        $database->rollBack();
+    }
     fwrite(STDERR, "Could not create admin account: {$exception->getMessage()}\n");
     exit(1);
 }

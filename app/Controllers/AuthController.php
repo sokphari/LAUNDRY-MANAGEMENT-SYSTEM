@@ -70,17 +70,30 @@ final class AuthController
 
         if ($user === false || !password_verify($password, $user['password_hash'])) {
             if ($user === false) password_verify($password, '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.');
+            $failedAttempts = 0;
+            $blockedFor = 0;
             try {
-                LoginRateLimiter::recordFailure($database, $login, $ip);
+                $failedAttempts = LoginRateLimiter::recordFailure($database, $login, $ip);
                 AuditLog::record($database, null, 'auth.login_failed', 'auth', null, 'Failed sign-in attempt', [
                     'login_identifier' => mb_substr($login, 0, 150),
                     'target_user_id' => $user === false ? null : (int)$user['id'],
                     'ip' => $ip,
                 ]);
+                $blockedFor = LoginRateLimiter::blockedFor($database, $login, $ip);
             } catch (PDOException $exception) {
                 error_log('[authentication] Could not record failed sign-in: ' . $exception->getMessage());
             }
-            self::redirectWithError('The username/email or password is incorrect.', $login);
+            $message = 'The username/email or password is incorrect.';
+            if ($failedAttempts > 0) {
+                $message .= ' Failed attempt ' . $failedAttempts . ' of 5.';
+                if ($blockedFor > 0) {
+                    $message .= ' Sign-in is temporarily locked. Try again in ' . max(1, (int) ceil($blockedFor / 60)) . ' minute(s).';
+                } else {
+                    $remaining = max(0, 5 - $failedAttempts);
+                    $message .= ' ' . $remaining . ' attempt' . ($remaining === 1 ? '' : 's') . ' remaining before temporary lockout.';
+                }
+            }
+            self::redirectWithError($message, $login);
             return;
         }
 

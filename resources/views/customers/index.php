@@ -32,7 +32,7 @@
                 <tbody id="customer-rows" data-csrf-token="<?= e($csrfToken) ?>" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     <?php foreach ($customers as $index => $customer): ?>
                         <tr>
-                            <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400"><?= e($index + 1) ?></td>
+                            <td class="px-5 py-4 text-zinc-500 dark:text-zinc-400"><?= e(($page - 1) * $perPage + $index + 1) ?></td>
                             <td class="px-5 py-4 font-medium"><?= e($customer['name'] ?? '') ?></td>
                             <td class="px-5 py-4 whitespace-nowrap"><?= e($customer['phone'] ?? '') ?></td>
                             <td class="max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300"><?= e($customer['address'] ?: '—') ?></td>
@@ -61,8 +61,21 @@
                 </tbody>
             </table>
         </div>
-        <div id="customer-result-count" class="border-t border-zinc-100 px-5 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-            Showing <?= count($customers) ?> customer<?= count($customers) === 1 ? '' : 's' ?><?= $query !== '' ? ' matching your search' : '' ?>.
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 px-5 py-3 dark:border-zinc-800">
+            <?php $start = $total > 0 ? (($page - 1) * $perPage) + 1 : 0; $end = min($page * $perPage, $total); ?>
+            <p id="customer-result-count" class="text-xs text-zinc-500 dark:text-zinc-400" aria-live="polite">
+                Showing <?= e($start) ?>–<?= e($end) ?> of <?= e($total) ?> customer<?= $total === 1 ? '' : 's' ?><?= $query !== '' ? ' matching your search' : '' ?>.
+            </p>
+            <nav id="customer-pagination" aria-label="Customer pages" class="flex flex-wrap items-center gap-1">
+                <?php $firstPage = max(1, $page - 2); $lastPage = min($totalPages, $page + 2); ?>
+                <a data-customer-page="<?= e(max(1, $page - 1)) ?>" href="/customers?<?= e(http_build_query(['q' => $query, 'page' => max(1, $page - 1)])) ?>" aria-label="Previous page" <?= $page <= 1 ? 'aria-disabled="true" tabindex="-1"' : '' ?> class="rounded-md border border-zinc-200 px-3 py-1.5 text-sm <?= $page <= 1 ? 'pointer-events-none opacity-50' : 'hover:border-primary hover:text-primary' ?> dark:border-zinc-700">Previous</a>
+                <?php if ($firstPage > 1): ?><a data-customer-page="1" href="/customers?<?= e(http_build_query(['q' => $query, 'page' => 1])) ?>" class="rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:border-primary hover:text-primary dark:border-zinc-700">1</a><?php if ($firstPage > 2): ?><span class="px-1 text-zinc-500" aria-hidden="true">…</span><?php endif; ?><?php endif; ?>
+                <?php for ($pageNumber = $firstPage; $pageNumber <= $lastPage; $pageNumber++): ?>
+                    <a data-customer-page="<?= e($pageNumber) ?>" href="/customers?<?= e(http_build_query(['q' => $query, 'page' => $pageNumber])) ?>" <?= $pageNumber === $page ? 'aria-current="page"' : '' ?> class="rounded-md border px-3 py-1.5 text-sm <?= $pageNumber === $page ? 'border-primary bg-violet-50 font-semibold text-primary dark:bg-violet-950/50' : 'border-zinc-200 hover:border-primary hover:text-primary dark:border-zinc-700' ?>"><?= e($pageNumber) ?></a>
+                <?php endfor; ?>
+                <?php if ($lastPage < $totalPages): ?><?php if ($lastPage < $totalPages - 1): ?><span class="px-1 text-zinc-500" aria-hidden="true">…</span><?php endif; ?><a data-customer-page="<?= e($totalPages) ?>" href="/customers?<?= e(http_build_query(['q' => $query, 'page' => $totalPages])) ?>" class="rounded-md border border-zinc-200 px-3 py-1.5 text-sm hover:border-primary hover:text-primary dark:border-zinc-700"><?= e($totalPages) ?></a><?php endif; ?>
+                <a data-customer-page="<?= e(min($totalPages, $page + 1)) ?>" href="/customers?<?= e(http_build_query(['q' => $query, 'page' => min($totalPages, $page + 1)])) ?>" aria-label="Next page" <?= $page >= $totalPages ? 'aria-disabled="true" tabindex="-1"' : '' ?> class="rounded-md border border-zinc-200 px-3 py-1.5 text-sm <?= $page >= $totalPages ? 'pointer-events-none opacity-50' : 'hover:border-primary hover:text-primary' ?> dark:border-zinc-700">Next</a>
+            </nav>
         </div>
     </div>
 </section>

@@ -14,30 +14,37 @@ final class Customer
         return $database->query('SELECT id, name, phone FROM customers WHERE is_active = 1 ORDER BY name LIMIT 500')->fetchAll();
     }
 
-    /** @return list<array<string, mixed>> */
-    public static function all(PDO $database): array
+    /** @return array{customers: list<array<string, mixed>>, total: int} */
+    public static function paginate(PDO $database, string $query, int $limit, int $offset): array
     {
-        $statement = $database->query(
-            'SELECT id, name, phone, address, notes, is_active, created_at
-             FROM customers WHERE is_active = 1 ORDER BY created_at DESC, id DESC LIMIT 100'
-        );
+        if ($query === '') {
+            $total = (int) $database->query('SELECT COUNT(*) FROM customers WHERE is_active = 1')->fetchColumn();
+            $statement = $database->prepare(
+                'SELECT id, name, phone, address, notes, is_active, created_at
+                 FROM customers WHERE is_active = 1 ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset'
+            );
+        } else {
+            $term = '%' . $query . '%';
+            $count = $database->prepare(
+                'SELECT COUNT(*) FROM customers
+                 WHERE is_active = 1 AND (name LIKE :name_count OR phone LIKE :phone_count)'
+            );
+            $count->execute(['name_count' => $term, 'phone_count' => $term]);
+            $total = (int) $count->fetchColumn();
+            $statement = $database->prepare(
+                'SELECT id, name, phone, address, notes, is_active, created_at
+                 FROM customers
+                 WHERE is_active = 1 AND (name LIKE :name_query OR phone LIKE :phone_query)
+                 ORDER BY created_at DESC, id DESC LIMIT :limit OFFSET :offset'
+            );
+            $statement->bindValue(':name_query', $term, PDO::PARAM_STR);
+            $statement->bindValue(':phone_query', $term, PDO::PARAM_STR);
+        }
+        $statement->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
 
-        return $statement->fetchAll();
-    }
-
-    /** @return list<array<string, mixed>> */
-    public static function search(PDO $database, string $query): array
-    {
-        $statement = $database->prepare(
-            'SELECT id, name, phone, address, notes, is_active, created_at
-             FROM customers
-             WHERE is_active = 1 AND (name LIKE :name_query OR phone LIKE :phone_query)
-             ORDER BY created_at DESC, id DESC LIMIT 100'
-        );
-        $term = '%' . $query . '%';
-        $statement->execute(['name_query' => $term, 'phone_query' => $term]);
-
-        return $statement->fetchAll();
+        return ['customers' => $statement->fetchAll(), 'total' => $total];
     }
 
     /** @return array<string, mixed>|false */

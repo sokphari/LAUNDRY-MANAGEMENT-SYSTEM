@@ -8,6 +8,7 @@ use App\Controllers\CustomerController;
 use App\Controllers\DashboardController;
 use App\Controllers\ServiceController;
 use App\Controllers\OrderController;
+use App\Controllers\NotificationController;
 use App\Controllers\PaymentController;
 use App\Controllers\ReportController;
 use App\Controllers\UserAdminController;
@@ -41,6 +42,13 @@ $router->get('/dashboard', static function () use ($databaseConfig): void {
 
 $router->get('/audit-logs', static function () use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'audit_logs.view')) AuditLogController::index($databaseConfig);
+});
+
+$router->get('/notifications', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig)) NotificationController::index($databaseConfig);
+});
+$router->post('/notifications/read', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig)) NotificationController::markRead($databaseConfig);
 });
 
 $router->get('/payments', static function () use ($databaseConfig): void {
