@@ -71,7 +71,7 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
       statusCell.className = 'px-5 py-4';
       const badge = document.createElement('span');
       badge.className = `rounded-full px-2.5 py-1 text-xs font-semibold ${active ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'}`;
-      badge.textContent = active ? 'Active' : 'Inactive';
+      badge.textContent = window.appTranslate(active ? 'Active' : 'Inactive');
       statusCell.append(badge);
       row.append(statusCell);
 
@@ -80,10 +80,10 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
       actionsCell.className = 'px-5 py-4';
       const actions = document.createElement('div');
       actions.className = 'flex items-center justify-end gap-2';
-      actions.append(actionLink(`/services/${Number(service.id)}`, `View ${service.name || 'service'}`, '<path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>'));
+      actions.append(actionLink(`/services/${Number(service.id)}`, window.appTranslate('View {name}', { name: service.name || window.appTranslate('service') }), '<path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/>'));
 
       if (serviceRows.dataset.canManage === '1') {
-        actions.append(actionLink(`/services/${Number(service.id)}/edit`, `Edit ${service.name || 'service'}`, '<path stroke-linecap="round" stroke-linejoin="round" d="m14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/>'));
+        actions.append(actionLink(`/services/${Number(service.id)}/edit`, window.appTranslate('Edit {name}', { name: service.name || window.appTranslate('service') }), '<path stroke-linecap="round" stroke-linejoin="round" d="m14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/>'));
         const form = document.createElement('form');
         form.method = 'post';
         form.action = `/services/${Number(service.id)}/status`;
@@ -98,8 +98,8 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
         nextStatus.value = active ? '0' : '1';
         const button = document.createElement('button');
         button.type = 'submit';
-        button.setAttribute('aria-label', `${active ? 'Deactivate' : 'Activate'} ${service.name || 'service'}`);
-        button.title = `${active ? 'Deactivate' : 'Activate'} service`;
+        button.setAttribute('aria-label', window.appTranslate(active ? 'Deactivate {name}' : 'Activate {name}', { name: service.name || window.appTranslate('service') }));
+        button.title = window.appTranslate(active ? 'Deactivate service' : 'Activate service');
         button.className = `grid size-9 place-items-center rounded-lg border border-zinc-200 focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 ${active ? 'text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:border-red-900 dark:hover:bg-red-950' : 'text-green-700 hover:border-green-300 hover:bg-green-50 dark:text-green-300 dark:hover:border-green-900 dark:hover:bg-green-950'}`;
         button.append(makeIcon(active
           ? '<rect x="4" y="10" width="16" height="11" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 10V7a4 4 0 0 1 8 0v3"/>'
@@ -117,14 +117,18 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
       const cell = document.createElement('td');
       cell.colSpan = 7;
       cell.className = 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400';
-      cell.textContent = 'No services found for these filters.';
+      cell.textContent = window.appTranslate('No services found for these filters.');
       row.append(cell);
       serviceRows.append(row);
     }
 
     const query = searchInput.value.trim();
     const status = statusFilter.value;
-    resultCount.textContent = `Showing ${services.length} service${services.length === 1 ? '' : 's'}${status !== 'all' ? ` with ${status} status` : ''}${query ? ' matching your search' : ''}.`;
+    resultCount.textContent = window.appTranslate('Showing {count} services{status}{matching}.', {
+      count: services.length,
+      status: status !== 'all' ? window.appTranslate(' with {status} status', { status: window.appTranslate(status[0].toUpperCase() + status.slice(1)) }) : '',
+      matching: query ? window.appTranslate(' matching your search.') : '',
+    });
   };
 
   const loadServices = async () => {
@@ -134,17 +138,17 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
     const pageParams = new URLSearchParams(params);
     [...pageParams.keys()].forEach((key) => { if (pageParams.get(key) === '') pageParams.delete(key); });
     history.replaceState(null, '', `/services${pageParams.size ? `?${pageParams}` : ''}`);
-    searchStatus.textContent = 'Loading services…';
+    searchStatus.textContent = window.appTranslate('Loading services…');
 
     try {
       const response = await fetch(`/services/search?${params}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: pendingRequest.signal });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not load services.');
+      if (!response.ok) throw new Error(result.error || window.appTranslate('Could not load services.'));
       renderServices(result.services || []);
-      searchStatus.textContent = `${result.services?.length || 0} services shown.`;
+      searchStatus.textContent = window.appTranslate('{count} services shown.', { count: result.services?.length || 0 });
     } catch (error) {
       if (error.name === 'AbortError') return;
-      searchStatus.textContent = error.message || 'Could not load services.';
+      searchStatus.textContent = error.message || window.appTranslate('Could not load services.');
     }
   };
 
@@ -164,11 +168,11 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
     try {
       const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' }, credentials: 'same-origin' });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not update service status.');
-      searchStatus.textContent = `Service ${result.is_active ? 'activated' : 'deactivated'}.`;
+      if (!response.ok) throw new Error(result.error || window.appTranslate('Could not update service status.'));
+      searchStatus.textContent = window.appTranslate(result.is_active ? 'Service activated.' : 'Service deactivated.');
       await loadServices();
     } catch (error) {
-      searchStatus.textContent = error.message || 'Could not update service status.';
+      searchStatus.textContent = error.message || window.appTranslate('Could not update service status.');
       if (button) button.disabled = false;
     }
   });

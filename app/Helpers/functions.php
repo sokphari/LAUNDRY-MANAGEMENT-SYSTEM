@@ -22,3 +22,42 @@ if (!function_exists('format_khr')) {
         return str_ends_with($formatted, '.00') ? substr($formatted, 0, -3) : $formatted;
     }
 }
+
+if (!function_exists('app_locale')) {
+    function app_locale(): string
+    {
+        $locale = $_SESSION['locale'] ?? 'en';
+        return in_array($locale, ['en', 'km'], true) ? $locale : 'en';
+    }
+}
+
+if (!function_exists('t')) {
+    function t(string $text, array $values = []): string
+    {
+        static $translations = [];
+        $locale = app_locale();
+        if ($locale !== 'en' && !isset($translations[$locale])) {
+            $path = dirname(__DIR__, 2) . '/resources/lang/' . $locale . '.php';
+            $translations[$locale] = is_file($path) ? require $path : [];
+        }
+        $translated = $locale === 'en' ? $text : ($translations[$locale][$text] ?? $text);
+        foreach ($values as $key => $value) {
+            $translated = str_replace('{' . $key . '}', (string) $value, $translated);
+        }
+        return $translated;
+    }
+}
+
+if (!function_exists('app_translations')) {
+    /** @return array<string, string> */
+    function app_translations(): array
+    {
+        $locale = app_locale();
+        if ($locale === 'en') {
+            return [];
+        }
+        $path = dirname(__DIR__, 2) . '/resources/lang/' . $locale . '.php';
+        $translations = is_file($path) ? require $path : [];
+        return is_array($translations) ? $translations : [];
+    }
+}

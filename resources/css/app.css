@@ -5,6 +5,16 @@
 @source "../../app";
 @source "../../public/assets/js";
 
+.user-gender-female {
+  background-color: #fce7f3;
+  color: #9d174d;
+}
+
+.dark .user-gender-female {
+  background-color: #500724;
+  color: #fbcfe8;
+}
+
 .quantity-input::-webkit-inner-spin-button,
 .quantity-input::-webkit-outer-spin-button {
   -webkit-appearance: none;

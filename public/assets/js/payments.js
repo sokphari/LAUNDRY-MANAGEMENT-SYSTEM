@@ -6,6 +6,7 @@ const paymentSearchStatus = document.querySelector('#payments-search-status');
   const exportLinks = [...document.querySelectorAll('[data-payments-export]')];
 
 if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && paymentSearchStatus) {
+  const t = (message, values = {}) => window.appTranslate(message, values);
   const queryInput = paymentsForm.querySelector('[name="q"]');
   const typeInput = paymentsForm.querySelector('[name="type"]');
   const statusInput = paymentsForm.querySelector('[name="status"]');
@@ -70,10 +71,10 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       const typeCell = makeCell(row, 'px-5 py-4');
       const typeBadge = document.createElement('span');
       typeBadge.className = `inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${isPending ? 'bg-yellow-100 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200' : isRefund ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'}`;
-      typeBadge.textContent = isPending ? 'Pending balance' : isRefund ? 'Refund' : 'Payment';
+      typeBadge.textContent = t(isPending ? 'Pending balance' : isRefund ? 'Refund' : 'Payment');
       const reference = document.createElement('p');
       reference.className = 'mt-1 text-xs text-zinc-500 dark:text-zinc-400';
-      reference.textContent = isPending ? 'Outstanding order balance' : isRefund ? `Refund #${transaction.transaction_id} · Payment #${transaction.payment_id}` : `Payment #${transaction.payment_id}`;
+      reference.textContent = isPending ? t('Outstanding order balance') : isRefund ? `${t('Refund')} #${transaction.transaction_id} · ${t('Payment')} #${transaction.payment_id}` : `${t('Payment')} #${transaction.payment_id}`;
       typeCell.append(typeBadge, reference);
 
       const orderCell = makeCell(row, 'px-5 py-4');
@@ -90,7 +91,7 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       orderCell.append(orderLink, customer, phone);
 
       const methodCell = makeCell(row, 'px-5 py-4');
-      methodCell.textContent = isPending ? '—' : String(transaction.method).toUpperCase() === 'KHQR' ? 'KHQR' : 'Cash';
+      methodCell.textContent = isPending ? '—' : String(transaction.method).toUpperCase() === 'KHQR' ? 'KHQR' : t('Cash');
 
       const amountCell = makeCell(row, `whitespace-nowrap px-5 py-4 text-right font-semibold ${isRefund ? 'text-red-700 dark:text-red-300' : ''}`);
       amountCell.textContent = `${isRefund ? '−' : ''}${formatMoney(amount)}`;
@@ -98,7 +99,7 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       const statusCell = makeCell(row, 'max-w-xs px-5 py-4');
       const statusText = document.createElement('span');
       statusText.className = `inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'pending' ? 'bg-yellow-500 text-black' : status === 'recorded' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
-      statusText.textContent = status[0].toUpperCase() + status.slice(1);
+      statusText.textContent = t(status[0].toUpperCase() + status.slice(1));
       statusCell.append(statusText);
       const reasonText = transaction.reason || transaction.void_reason;
       if (reasonText) {
@@ -120,22 +121,22 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       const viewLink = document.createElement('a');
       const returnUrl = `${location.pathname}${location.search}`;
       viewLink.href = `/orders/${orderId}${isPayment ? `?payment_id=${paymentId}&return=${encodeURIComponent(returnUrl)}` : ''}`;
-      viewLink.title = isPayment ? 'View payment details' : 'View order';
+      viewLink.title = t(isPayment ? 'View payment details' : 'View order');
       viewLink.className = 'rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-200';
-      viewLink.textContent = 'View';
+      viewLink.textContent = t('View');
       actions.append(viewLink);
       if (isPayment && status === 'recorded') {
         const printLink = document.createElement('a');
         printLink.href = `/orders/${orderId}?print=payment&payment_id=${paymentId}&size=80`;
-        printLink.title = `Print receipt for payment #${paymentId}`;
+        printLink.title = t('Print receipt for payment #{payment}', { payment: paymentId });
         printLink.className = 'rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover';
-        printLink.textContent = 'Print Receipt';
+        printLink.textContent = t('Print Receipt');
         printLink.className = 'whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover';
         actions.append(printLink);
       } else if (isPayment) {
         const correctedLabel = document.createElement('span');
         correctedLabel.className = 'px-2 py-1.5 text-xs text-zinc-400';
-        correctedLabel.title = 'Corrected payments cannot be printed';
+        correctedLabel.title = t('Corrected payments cannot be printed');
         correctedLabel.textContent = '—';
         actions.append(correctedLabel);
       }
@@ -147,7 +148,7 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       const row = document.createElement('tr');
       const cell = makeCell(row, 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400');
       cell.colSpan = 8;
-      cell.textContent = 'No payment transactions found.';
+      cell.textContent = t('No payment transactions found.');
       paymentRows.append(row);
     }
   };
@@ -164,12 +165,12 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       link.textContent = label;
       paymentPagination.append(link);
     };
-    if (page > 1) addLink(page - 1, 'Previous');
+    if (page > 1) addLink(page - 1, t('Previous'));
     const label = document.createElement('span');
     label.className = 'px-2 text-xs text-zinc-500 dark:text-zinc-400';
-    label.textContent = `Page ${page} of ${totalPages}`;
+    label.textContent = t('Page {page} of {pages}', { page, pages: totalPages });
     paymentPagination.append(label);
-    if (page < totalPages) addLink(page + 1, 'Next');
+    if (page < totalPages) addLink(page + 1, t('Next'));
   };
 
   const loadTransactions = async (page = currentPage) => {
@@ -179,16 +180,16 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
     [...params.keys()].forEach((key) => { if (!params.get(key) || (key === 'page' && params.get(key) === '1')) params.delete(key); });
     history.replaceState(null, '', `/payments${params.size ? `?${params}` : ''}`);
     updateExportLinks();
-    paymentSearchStatus.textContent = 'Loading payment transactions…';
+    paymentSearchStatus.textContent = t('Loading payment transactions…');
     try {
       const response = await fetch(`/payments/search?${params}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: pendingRequest.signal });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not load payment transactions.');
+      if (!response.ok) throw new Error(result.error || t('Could not load payment transactions.'));
       renderTransactions(result.transactions || []);
       const total = Number(result.total || 0);
       const first = total === 0 ? 0 : ((result.page - 1) * 10 + 1);
       const last = Math.min(result.page * 10, total);
-      paymentResultCount.textContent = `Showing ${first}–${last} of ${total} transactions.`;
+      paymentResultCount.textContent = t('Showing {first}–{last} of {total} transactions.', { first, last, total });
       renderPagination(result.page || page, result.total_pages || 1);
     totalIn.textContent = formatMoney(result.summary?.payments);
       totalRefunds.textContent = formatMoney(result.summary?.refunds);
@@ -200,10 +201,10 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
         });
       });
       currentPage = result.page || page;
-      paymentSearchStatus.textContent = `${result.transactions?.length || 0} transactions shown.`;
+      paymentSearchStatus.textContent = t('{count} transactions shown.', { count: result.transactions?.length || 0 });
     } catch (error) {
       if (error.name === 'AbortError') return;
-      paymentSearchStatus.textContent = error.message || 'Could not load payment transactions.';
+      paymentSearchStatus.textContent = error.message || t('Could not load payment transactions.');
     }
   };
 

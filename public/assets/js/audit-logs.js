@@ -5,6 +5,7 @@ const auditCount = document.querySelector('#audit-result-count');
 const auditStatus = document.querySelector('#audit-status');
 
 if (auditForm && auditRows && auditPagination && auditCount) {
+  const t = (message, values = {}) => window.appTranslate(message, values);
   const searchInput = auditForm.querySelector('[name="q"]');
   const filterInputs = [...auditForm.querySelectorAll('select, input[type="date"]')];
   const rangeInput = auditForm.querySelector('[name="range"]');
@@ -32,7 +33,9 @@ if (auditForm && auditRows && auditPagination && auditCount) {
   };
 
   const humanize = (value) => String(value).replaceAll('_', ' ').replaceAll('.', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const fieldLabel = (value) => t(humanize(value));
   const formatFieldValue = (field, value) => {
+    if (/(^|\.)(status|method|payment_method|refund_method)$/.test(field) && typeof value === 'string') return t(value[0].toUpperCase() + value.slice(1));
     const isMoney = /(price|amount|total|subtotal|deposit|refundable)$/.test(field);
     const formatted = isMoney && value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value))
       ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(Number(value))
@@ -41,15 +44,15 @@ if (auditForm && auditRows && auditPagination && auditCount) {
   };
   const formatValue = (value) => {
     if (value === null || value === undefined || value === '') return '—';
-    if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+    if (typeof value === 'boolean') return t(value ? 'Yes' : 'No');
     if (Array.isArray(value)) {
       if (value.length === 0) return 'None';
       return value.map((item) => {
-        if (item && typeof item === 'object') return Object.entries(item).map(([key, part]) => `${humanize(key)}: ${formatValue(part)}`).join(' · ');
+        if (item && typeof item === 'object') return Object.entries(item).map(([key, part]) => `${fieldLabel(key)}: ${formatValue(part)}`).join(' · ');
         return formatValue(item);
       }).join('\n');
     }
-    if (typeof value === 'object') return Object.entries(value).map(([key, part]) => `${humanize(key)}: ${formatValue(part)}`).join(' · ');
+    if (typeof value === 'object') return Object.entries(value).map(([key, part]) => `${fieldLabel(key)}: ${formatValue(part)}`).join(' · ');
     return String(value);
   };
 
@@ -68,7 +71,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       const before = flatten(details.before || {});
       const after = flatten(details.after || {});
       const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])];
-      const rows = keys.map((key) => [humanize(key), formatFieldValue(key, before[key]), formatFieldValue(key, after[key])]);
+      const rows = keys.map((key) => [fieldLabel(key), formatFieldValue(key, before[key]), formatFieldValue(key, after[key])]);
       if (details.amount !== undefined) rows.push(['This refund', '—', formatFieldValue('amount', details.amount)]);
       if (details.payment_method !== undefined) rows.push(['Original payment method', '—', formatValue(details.payment_method)]);
       if (details.refund_method !== undefined) rows.push(['Refund method', '—', formatValue(details.refund_method)]);
@@ -83,7 +86,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       if (details.original_method !== undefined || details.replacement_method !== undefined) rows.push(['Payment method', formatValue(details.original_method), hasReplacement ? formatValue(details.replacement_method) : 'Voided']);
       return { reason, rows };
     }
-    const rows = Object.entries(details).filter(([key]) => key !== 'reason').map(([key, value]) => [humanize(key), '—', formatFieldValue(key, value)]);
+    const rows = Object.entries(details).filter(([key]) => key !== 'reason').map(([key, value]) => [fieldLabel(key), '—', formatFieldValue(key, value)]);
     return { reason, rows };
   };
 
@@ -101,7 +104,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       wrapper.className = 'min-w-0';
       const term = document.createElement('dt');
       term.className = 'text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400';
-      term.textContent = label;
+      term.textContent = t(label);
       const description = document.createElement('dd');
       description.className = 'mt-1 break-words text-sm font-medium';
       description.textContent = value || '—';
@@ -114,7 +117,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     if (rows.length > 0) {
       const heading = document.createElement('h3');
       heading.className = 'text-sm font-semibold';
-      heading.textContent = 'Change comparison';
+      heading.textContent = t('Change comparison');
       const scroller = document.createElement('div');
       scroller.className = 'overflow-x-auto overscroll-x-contain rounded-lg border border-zinc-200 dark:border-zinc-800';
       const table = document.createElement('table');
@@ -126,7 +129,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
         const th = document.createElement('th');
         th.scope = 'col';
         th.className = 'px-3 py-2 font-semibold';
-        th.textContent = label;
+        th.textContent = t(label);
         headRow.append(th);
       });
       thead.append(headRow);
@@ -151,14 +154,14 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       const reasonBox = document.createElement('p');
       reasonBox.className = 'rounded-lg border border-violet-200 bg-white/70 p-3 text-sm dark:border-violet-900 dark:bg-zinc-900';
       const label = document.createElement('strong');
-      label.textContent = 'Reason: ';
+      label.textContent = t('Reason: ');
       reasonBox.append(label, document.createTextNode(formatValue(reason)));
       section.append(reasonBox);
     }
     if (rows.length === 0 && (reason === null || reason === '')) {
       const empty = document.createElement('p');
       empty.className = 'text-sm text-zinc-600 dark:text-zinc-300';
-      empty.textContent = 'No value changes were recorded for this event.';
+      empty.textContent = t('No value changes were recorded for this event.');
       section.append(empty);
     }
     panel.replaceChildren(section);
@@ -185,11 +188,11 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     button.dataset.auditId = String(log.id);
     button.dataset.auditActor = log.username || 'Deleted user';
     button.dataset.auditTime = log.created_display || '';
-    button.dataset.auditModule = humanize(log.entity_type || '');
-    button.dataset.auditAction = log.action_label || humanize(log.action || '');
-    button.dataset.auditRecord = `${humanize(log.entity_type || 'record')}${log.entity_id ? ` #${log.entity_id}` : ''}`;
+    button.dataset.auditModule = t(humanize(log.entity_type || ''));
+    button.dataset.auditAction = t(log.action_label || humanize(log.action || ''));
+    button.dataset.auditRecord = `${t(humanize(log.entity_type || 'record'))}${log.entity_id ? ` #${log.entity_id}` : ''}`;
     button.dataset.auditData = JSON.stringify(log.details_data && typeof log.details_data === 'object' ? log.details_data : {});
-    button.textContent = 'View Change Details';
+    button.textContent = t('View Change Details');
     return detailRow;
   };
 
@@ -198,7 +201,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     auditRows.replaceChildren();
     if (logs.length === 0) {
       const row = document.createElement('tr');
-      const cell = appendTextCell(row, 'No audit activity found.', 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400');
+      const cell = appendTextCell(row, t('No audit activity found.'), 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400');
       cell.colSpan = 5;
       auditRows.append(row);
       return;
@@ -214,7 +217,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
       actionCell.className = 'px-5 py-4';
       const badge = document.createElement('span');
       badge.className = `inline-flex rounded-full px-3 py-1.5 text-xs font-semibold leading-4 ${log.action_class || 'bg-zinc-800 text-zinc-300'}`;
-      badge.textContent = log.action_label || log.action;
+      badge.textContent = t(log.action_label || log.action);
       actionCell.append(badge);
       row.append(actionCell);
 
@@ -226,11 +229,11 @@ if (auditForm && auditRows && auditPagination && auditCount) {
         link.href = `/orders/${linkedOrderId}`;
         link.className = 'font-medium text-primary hover:underline';
         link.textContent = ['payment', 'refund'].includes(log.entity_type)
-          ? `Order #${linkedOrderId} · ${humanize(log.entity_type)} #${log.entity_id}`
-          : `${(log.entity_type || 'record')[0].toUpperCase()}${(log.entity_type || 'record').slice(1)} #${log.entity_id}`;
+          ? `${t('Order')} #${linkedOrderId} · ${t(humanize(log.entity_type))} #${log.entity_id}`
+          : `${t(humanize(log.entity_type || 'record'))} #${log.entity_id}`;
         recordCell.append(link);
       } else {
-        recordCell.textContent = `${(log.entity_type || 'record')[0].toUpperCase()}${(log.entity_type || 'record').slice(1)}${log.entity_id ? ` #${log.entity_id}` : ''}`;
+        recordCell.textContent = `${t(humanize(log.entity_type || 'record'))}${log.entity_id ? ` #${log.entity_id}` : ''}`;
       }
       row.append(recordCell);
 
@@ -256,7 +259,7 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     const isOpen = button.getAttribute('aria-expanded') === 'true';
     if (expandedButton && expandedButton !== button) {
       expandedButton.setAttribute('aria-expanded', 'false');
-      expandedButton.textContent = 'View Change Details';
+      expandedButton.textContent = t('View Change Details');
       const previousRow = document.getElementById(expandedButton.getAttribute('aria-controls'));
       if (previousRow) previousRow.hidden = true;
     }
@@ -264,13 +267,13 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     if (!detailsRow) return;
     if (isOpen) {
       button.setAttribute('aria-expanded', 'false');
-      button.textContent = 'View Change Details';
+      button.textContent = t('View Change Details');
       detailsRow.hidden = true;
       expandedButton = null;
       return;
     }
     button.setAttribute('aria-expanded', 'true');
-    button.textContent = 'Hide Change Details';
+    button.textContent = t('Hide Change Details');
     detailsRow.hidden = false;
     renderDetailPanel(button, detailsRow.querySelector('[data-audit-panel]'));
     expandedButton = button;
@@ -287,35 +290,35 @@ if (auditForm && auditRows && auditPagination && auditCount) {
 
   const renderPagination = (page, totalPages, total) => {
     auditPagination.replaceChildren();
-    if (page > 1) auditPagination.append(pageLink('Previous', page - 1));
+    if (page > 1) auditPagination.append(pageLink(t('Previous'), page - 1));
     const label = document.createElement('span');
     label.className = 'px-2 text-xs text-zinc-500 dark:text-zinc-400';
     label.dataset.auditPageLabel = '';
-    label.textContent = `Page ${page} of ${totalPages}`;
+    label.textContent = t('Page {page} of {pages}', { page, pages: totalPages });
     auditPagination.append(label);
-    if (page < totalPages) auditPagination.append(pageLink('Next', page + 1));
+    if (page < totalPages) auditPagination.append(pageLink(t('Next'), page + 1));
     const first = total === 0 ? 0 : ((page - 1) * 10 + 1);
     const last = Math.min(page * 10, total);
-    auditCount.textContent = `Showing ${first}–${last} of ${total} events`;
+    auditCount.textContent = t('Showing {first}–{last} of {total} events', { first, last, total });
   };
 
   const loadAuditLogs = async (page = 1, historyMode = 'replace') => {
     pendingRequest?.abort();
     pendingRequest = new AbortController();
-    if (auditStatus) auditStatus.textContent = 'Loading audit activity…';
+    if (auditStatus) auditStatus.textContent = t('Loading audit activity…');
     const params = currentParams(page);
     const url = `/audit-logs?${params}`;
     try {
       const response = await fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: pendingRequest.signal });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not load audit activity.');
+      if (!response.ok) throw new Error(result.error || t('Could not load audit activity.'));
       renderLogs(result.logs || []);
       renderPagination(result.page || page, result.total_pages || 1, result.total || 0);
       if (historyMode !== 'none') history[`${historyMode}State`]({}, '', url);
-      if (auditStatus) auditStatus.textContent = 'Audit activity updated.';
+      if (auditStatus) auditStatus.textContent = t('Audit activity updated.');
     } catch (error) {
       if (error.name === 'AbortError') return;
-      if (auditStatus) auditStatus.textContent = error.message || 'Could not load audit activity.';
+      if (auditStatus) auditStatus.textContent = error.message || t('Could not load audit activity.');
     }
   };
 

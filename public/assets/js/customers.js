@@ -8,6 +8,15 @@
 
   if (!form || !input || !rows || !status) return;
 
+  let translations = {};
+  try {
+    translations = JSON.parse(rows.dataset.i18n || '{}');
+  } catch {}
+  const translate = (key, values = {}) => Object.entries(values).reduce(
+    (message, [name, value]) => message.replaceAll(`{${name}}`, String(value)),
+    translations[key] || key,
+  );
+
   let debounceTimer;
   let activeRequest;
   const svgNamespace = 'http://www.w3.org/2000/svg';
@@ -49,7 +58,7 @@
     link.href = `/customers/${encodeURIComponent(id)}${action === 'edit' ? '/edit' : ''}`;
     link.className = `grid size-9 place-items-center rounded-lg border border-zinc-200 ${colorClass} focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700`;
     link.setAttribute('aria-label', `${label} ${customerName}`);
-    link.title = `${label} customer`;
+    link.title = label;
     link.append(makeIcon(action));
     return link;
   };
@@ -58,6 +67,16 @@
     const cell = document.createElement('td');
     cell.className = className;
     cell.textContent = text || '—';
+    return cell;
+  };
+
+  const makeBadgeCell = (text, badgeClass, cellClass = 'px-5 py-4') => {
+    const cell = document.createElement('td');
+    cell.className = cellClass;
+    const badge = document.createElement('span');
+    badge.className = badgeClass;
+    badge.textContent = text || '—';
+    cell.append(badge);
     return cell;
   };
 
@@ -89,7 +108,7 @@
   const renderPagination = (page, totalPages) => {
     if (!pagination) return;
     pagination.replaceChildren();
-    pagination.append(makePageLink('Previous', Math.max(1, page - 1), page, page <= 1, 'Previous page'));
+    pagination.append(makePageLink(translations.previous || 'Previous', Math.max(1, page - 1), page, page <= 1, translations.previousPage || 'Previous page'));
 
     const first = Math.max(1, page - 2);
     const last = Math.min(totalPages, page + 2);
@@ -116,14 +135,14 @@
       }
       pagination.append(makePageLink(String(totalPages), totalPages, page));
     }
-    pagination.append(makePageLink('Next', Math.min(totalPages, page + 1), page, page >= totalPages, 'Next page'));
+    pagination.append(makePageLink(translations.next || 'Next', Math.min(totalPages, page + 1), page, page >= totalPages, translations.nextPage || 'Next page'));
   };
 
   const renderCustomers = (customers, query, page, total, totalPages) => {
     rows.replaceChildren();
 
     if (customers.length === 0) {
-      showEmptyRow(query ? 'No customers matched your search.' : 'No customers yet. Add your first customer to get started.');
+      showEmptyRow(query ? translate('noSearchResults') : translate('noCustomers'));
     } else {
       customers.forEach((customer, index) => {
         const id = String(customer.id ?? '');
@@ -131,26 +150,26 @@
         const name = String(customer.name ?? '');
         const row = document.createElement('tr');
         row.append(makeCell(String((page - 1) * 10 + index + 1), 'px-5 py-4 text-zinc-500 dark:text-zinc-400'));
-        row.append(makeCell(name, 'px-5 py-4 font-medium'));
+        row.append(makeBadgeCell(name, 'inline-flex max-w-full rounded-full bg-violet-100 px-3 py-1.5 font-semibold text-violet-800 dark:bg-violet-950 dark:text-violet-200'));
         row.append(makeCell(String(customer.phone ?? ''), 'px-5 py-4 whitespace-nowrap'));
-        row.append(makeCell(String(customer.address ?? '') || '—', 'max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300'));
+        row.append(makeBadgeCell(String(customer.address ?? '') || '—', 'inline-block max-w-full truncate rounded-lg bg-sky-50 px-3 py-1.5 text-sky-900 dark:bg-sky-950/60 dark:text-sky-100', 'max-w-sm px-5 py-4'));
         const createdAt = new Date(String(customer.created_at ?? '').replace(' ', 'T'));
         const formattedCreatedAt = Number.isNaN(createdAt.getTime())
           ? String(customer.created_at ?? '')
-          : new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt);
+          : new Intl.DateTimeFormat(document.documentElement.lang === 'km' ? 'km-KH' : 'en-GB', { dateStyle: 'medium', timeStyle: 'short' }).format(createdAt);
         row.append(makeCell(formattedCreatedAt, 'px-5 py-4 whitespace-nowrap text-zinc-600 dark:text-zinc-300'));
 
         const actionCell = document.createElement('td');
         actionCell.className = 'px-5 py-4';
         const actionGroup = document.createElement('div');
         actionGroup.className = 'flex items-center justify-end gap-2';
-        actionGroup.append(makeActionLink(id, name, 'view', 'View', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
-        actionGroup.append(makeActionLink(id, name, 'edit', 'Edit', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
+        actionGroup.append(makeActionLink(id, name, 'view', translations.view || 'View customer', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
+        actionGroup.append(makeActionLink(id, name, 'edit', translations.edit || 'Edit customer', 'text-zinc-600 hover:border-primary hover:text-primary dark:text-zinc-300'));
 
         const deleteForm = document.createElement('form');
         deleteForm.method = 'post';
         deleteForm.action = `/customers/${encodeURIComponent(id)}/delete`;
-        deleteForm.dataset.confirm = `Deactivate ${name || 'this customer'}? Existing records will be preserved.`;
+        deleteForm.dataset.confirm = translate('deactivate', { name: name || 'customer' });
         const csrf = document.createElement('input');
         csrf.type = 'hidden';
         csrf.name = '_csrf_token';
@@ -158,8 +177,8 @@
         const deleteButton = document.createElement('button');
         deleteButton.type = 'submit';
         deleteButton.className = 'grid size-9 place-items-center rounded-lg border border-zinc-200 text-red-600 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-zinc-700 dark:hover:border-red-900 dark:hover:bg-red-950';
-        deleteButton.setAttribute('aria-label', `Delete ${name}`);
-        deleteButton.title = 'Delete customer';
+        deleteButton.setAttribute('aria-label', `${translations.delete || 'Delete customer'} ${name}`);
+        deleteButton.title = translations.delete || 'Delete customer';
         deleteButton.append(makeIcon('delete'));
         deleteForm.append(csrf, deleteButton);
         actionGroup.append(deleteForm);
@@ -172,10 +191,10 @@
     if (resultCount) {
       const first = total > 0 ? ((page - 1) * 10) + 1 : 0;
       const last = Math.min(page * 10, total);
-      resultCount.textContent = `Showing ${first}–${last} of ${total} customer${total === 1 ? '' : 's'}${query ? ' matching your search' : ''}.`;
+      resultCount.textContent = translate(total === 1 ? 'resultCountOne' : 'resultCountMany', { first, last, total, matching: query ? (translations.matching || ' matching your search') : '' });
     }
     renderPagination(page, totalPages);
-    status.textContent = `${total} customer${total === 1 ? '' : 's'} found. Page ${page} of ${totalPages}.`;
+    status.textContent = translate('found', { total, page, pages: totalPages });
   };
 
   const search = async (page = 1) => {
@@ -187,7 +206,7 @@
     if (query) url.searchParams.set('q', query);
     url.searchParams.set('page', String(page));
 
-    status.textContent = 'Searching customers…';
+    status.textContent = translate('searching');
     try {
       const response = await fetch(url, {
         headers: { Accept: 'application/json' },
@@ -195,7 +214,7 @@
         signal: activeRequest.signal,
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Search failed. Please try again.');
+      if (!response.ok) throw new Error(result.error || translate('searchFailed'));
       renderCustomers(
         Array.isArray(result.customers) ? result.customers : [],
         query,
@@ -212,8 +231,8 @@
       window.history.replaceState({}, '', pageUrl);
     } catch (error) {
       if (error.name === 'AbortError') return;
-      status.textContent = error.message || 'Search failed. Please try again.';
-      showEmptyRow('Could not load customer search results. Please try again.');
+      status.textContent = error.message || translate('searchFailed');
+      showEmptyRow(translate('loadFailed'));
     }
   };
 

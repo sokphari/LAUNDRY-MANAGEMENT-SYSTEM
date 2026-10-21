@@ -3,6 +3,9 @@ const sidebarToggle = document.querySelector('#sidebar-toggle');
 const sidebarBackdrop = document.querySelector('#sidebar-backdrop');
 const desktopSidebarQuery = window.matchMedia('(min-width: 768px)');
 const sidebarStorageKey = 'laundry-sidebar-collapsed';
+const sidebarText = document.documentElement.lang === 'km'
+  ? { open: 'បើកម៉ឺនុយ', close: 'បិទម៉ឺនុយ', collapse: 'បង្រួមម៉ឺនុយ', expand: 'ពង្រីកម៉ឺនុយ' }
+  : { open: 'Open navigation', close: 'Close navigation', collapse: 'Collapse navigation', expand: 'Expand navigation' };
 
 let sidebarCollapsed = false;
 try {
@@ -19,8 +22,8 @@ const syncSidebar = () => {
   }
   sidebarToggle?.setAttribute('aria-expanded', String(isDesktop ? !sidebarCollapsed : mobileOpen));
   const label = isDesktop
-    ? (sidebarCollapsed ? 'Expand navigation' : 'Collapse navigation')
-    : (mobileOpen ? 'Close navigation' : 'Open navigation');
+    ? (sidebarCollapsed ? sidebarText.expand : sidebarText.collapse)
+    : (mobileOpen ? sidebarText.close : sidebarText.open);
   sidebarToggle?.setAttribute('aria-label', label);
   sidebarToggle?.setAttribute('title', label);
   sidebarBackdrop?.classList.toggle('hidden', isDesktop || !mobileOpen);

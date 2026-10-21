@@ -13,11 +13,31 @@ use App\Controllers\PaymentController;
 use App\Controllers\ReportController;
 use App\Controllers\UserAdminController;
 use App\Core\Auth;
+use App\Core\Csrf;
 use App\Middleware\RequireAuth;
 use App\Middleware\RequirePermission;
 
 $router->get('/', static function (): void {
     header('Location: ' . (Auth::check() ? '/dashboard' : '/login'), true, 302);
+});
+
+$router->post('/language', static function (): void {
+    if (!Csrf::verify($_POST['_csrf_token'] ?? null)) {
+        http_response_code(419);
+        echo 'Your session expired. Please try again.';
+        return;
+    }
+
+    $locale = (string) ($_POST['locale'] ?? 'en');
+    if (in_array($locale, ['en', 'km'], true)) {
+        $_SESSION['locale'] = $locale;
+    }
+
+    $returnTo = (string) ($_POST['return_to'] ?? '/');
+    if (!str_starts_with($returnTo, '/') || str_starts_with($returnTo, '//') || str_contains($returnTo, "\\") || preg_match('/[\r\n]/', $returnTo)) {
+        $returnTo = '/';
+    }
+    header('Location: ' . $returnTo, true, 303);
 });
 
 $router->get('/login', static function () use ($databaseConfig): void {

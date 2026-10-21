@@ -1,4 +1,5 @@
 const receiptFormat = document.querySelector('[data-receipt-format]');
+const appT = (message, values = {}) => window.appTranslate(message, values);
 
 document.querySelectorAll('[data-print-document]').forEach((button) => {
   button.addEventListener('click', () => {
@@ -243,6 +244,7 @@ const orderNextStatuses = {
 const orderStatusBaseClasses = 'rounded-lg border px-2 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30';
 
 if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagination) {
+  const t = appT;
   const queryInput = orderSearchForm.querySelector('[name="q"]');
   const statusInput = orderSearchForm.querySelector('[name="status"]');
   const fromInput = orderSearchForm.querySelector('[name="from"]');
@@ -295,7 +297,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       balanceText.textContent = formatMoney(balanceAmount);
       const paymentBadge = document.createElement('span');
       paymentBadge.className = `mt-1 inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold ${balanceAmount <= 0 ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-300' : paidAmount <= 0 ? 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'}`;
-      paymentBadge.textContent = balanceAmount <= 0 ? 'Paid' : paidAmount <= 0 ? 'Unpaid' : 'Partial';
+      paymentBadge.textContent = t(balanceAmount <= 0 ? 'Paid' : paidAmount <= 0 ? 'Unpaid' : 'Partial');
       balanceCell.append(balanceText, paymentBadge);
 
       const statusCell = document.createElement('td');
@@ -316,7 +318,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       const label = document.createElement('label');
       label.className = 'sr-only';
       label.htmlFor = `status-${Number(order.id)}`;
-      label.textContent = `Status for ${order.order_code}`;
+      label.textContent = t('Status for {order}', { order: order.order_code });
       const select = document.createElement('select');
       select.id = `status-${Number(order.id)}`;
       select.name = 'status';
@@ -324,7 +326,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       select.dataset.currentStatus = order.status;
       select.className = `${orderStatusBaseClasses} ${orderStatusClasses[order.status] || orderStatusClasses.received}`;
       [order.status, ...(orderNextStatuses[order.status] || [])].forEach((status) => {
-        const option = new Option(status[0].toUpperCase() + status.slice(1), status, false, order.status === status);
+        const option = new Option(t(status[0].toUpperCase() + status.slice(1)), status, false, order.status === status);
         select.append(option);
       });
       select.disabled = ['collected', 'cancelled'].includes(order.status);
@@ -338,8 +340,8 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       const printLink = document.createElement('a');
       const canPrintPaymentReceipt = ['ready', 'collected'].includes(order.status) && Number(order.paid_amount || 0) > 0;
       printLink.href = `/orders/${Number(order.id)}?print=payment&size=80`;
-      printLink.setAttribute('aria-label', `Print payment receipt for ${order.order_code}`);
-      printLink.title = canPrintPaymentReceipt ? 'Print payment receipt' : Number(order.paid_amount || 0) <= 0 ? 'Available after a payment is recorded' : 'Available when order is ready';
+      printLink.setAttribute('aria-label', t('Print payment receipt for {order}', { order: order.order_code }));
+      printLink.title = t(canPrintPaymentReceipt ? 'Print payment receipt' : Number(order.paid_amount || 0) <= 0 ? 'Available after a payment is recorded' : 'Available when order is ready');
       if (!canPrintPaymentReceipt) {
         printLink.setAttribute('aria-disabled', 'true');
         printLink.setAttribute('tabindex', '-1');
@@ -349,15 +351,15 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       printLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/></svg>';
       const viewLink = document.createElement('a');
       viewLink.href = `/orders/${Number(order.id)}`;
-      viewLink.setAttribute('aria-label', `View order ${order.order_code}`);
-      viewLink.title = 'View order';
+      viewLink.setAttribute('aria-label', t('View order {order}', { order: order.order_code }));
+      viewLink.title = t('View order');
       viewLink.className = 'inline-grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-300';
       viewLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
       if (!['collected', 'cancelled'].includes(order.status)) {
         const editLink = document.createElement('a');
         editLink.href = `/orders/${Number(order.id)}/edit`;
-        editLink.setAttribute('aria-label', `Edit order ${order.order_code}`);
-        editLink.title = 'Edit order';
+        editLink.setAttribute('aria-label', t('Edit order {order}', { order: order.order_code }));
+        editLink.title = t('Edit order');
         editLink.className = 'inline-grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-300';
         editLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m14.25 5.25 4.5 4.5M4 20l4.2-.9L19 8.3a2.12 2.12 0 0 0-3-3L5.2 16.1 4 20Z"/></svg>';
         actions.append(editLink);
@@ -369,8 +371,8 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
         paymentButton.dataset.orderId = String(Number(order.id));
         paymentButton.dataset.orderCode = order.order_code;
         paymentButton.dataset.balance = balanceAmount.toFixed(2);
-        paymentButton.setAttribute('aria-label', `Record payment for ${order.order_code}`);
-        paymentButton.title = 'Record payment';
+        paymentButton.setAttribute('aria-label', t('Record payment for {order}', { order: order.order_code }));
+        paymentButton.title = t('Record payment');
         paymentButton.className = 'inline-grid size-9 place-items-center rounded-lg border border-emerald-200 text-emerald-700 hover:border-emerald-500 hover:bg-emerald-50 dark:border-emerald-900 dark:text-emerald-300 dark:hover:bg-emerald-950';
         paymentButton.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18m-13 5h3"/></svg>';
         actions.append(paymentButton);
@@ -385,13 +387,13 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       const cell = document.createElement('td');
       cell.colSpan = 10;
       cell.className = 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400';
-      cell.textContent = 'No orders found for these filters.';
+      cell.textContent = t('No orders found for these filters.');
       row.append(cell);
       orderRows.append(row);
     }
     const first = total === 0 ? 0 : ((page - 1) * 10 + 1);
     const last = Math.min(page * 10, total);
-    orderCount.textContent = `Showing ${first}–${last} of ${total} orders.`;
+    orderCount.textContent = t('Showing {first}–{last} of {total} orders.', { first, last, total });
     currentPage = page;
     orderPagination.replaceChildren();
     const addPageLink = (targetPage, label) => {
@@ -404,12 +406,12 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       link.textContent = label;
       orderPagination.append(link);
     };
-    if (page > 1) addPageLink(page - 1, 'Previous');
+    if (page > 1) addPageLink(page - 1, t('Previous'));
     const pageLabel = document.createElement('span');
     pageLabel.className = 'px-2 text-xs text-zinc-500 dark:text-zinc-400';
-    pageLabel.textContent = `Page ${page} of ${totalPages}`;
+    pageLabel.textContent = t('Page {page} of {pages}', { page, pages: totalPages });
     orderPagination.append(pageLabel);
-    if (page < totalPages) addPageLink(page + 1, 'Next');
+    if (page < totalPages) addPageLink(page + 1, t('Next'));
   };
 
   const loadOrders = async (page = currentPage) => {
@@ -418,16 +420,16 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
     const params = new URLSearchParams({ q: queryInput.value.trim(), status: statusInput.value, from: fromInput.value, to: toInput.value, page: String(page) });
     [...params.keys()].forEach((key) => { if (!params.get(key) || (key === 'page' && params.get(key) === '1')) params.delete(key); });
     history.replaceState(null, '', `/orders${params.size ? `?${params}` : ''}`);
-    orderSearchStatus.textContent = 'Loading orders…';
+    orderSearchStatus.textContent = t('Loading orders…');
     try {
       const response = await fetch(`/orders/search?${params}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin', signal: pendingRequest.signal });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not load orders.');
+      if (!response.ok) throw new Error(result.error || t('Could not load orders.'));
       renderOrders(result.orders || [], result.page || page, result.total || 0, result.total_pages || 1);
-      orderSearchStatus.textContent = `${result.orders?.length || 0} orders shown.`;
+      orderSearchStatus.textContent = t('{count} orders shown.', { count: result.orders?.length || 0 });
     } catch (error) {
       if (error.name === 'AbortError') return;
-      orderSearchStatus.textContent = error.message || 'Could not load orders.';
+      orderSearchStatus.textContent = error.message || t('Could not load orders.');
     }
   };
 
@@ -458,7 +460,7 @@ document.addEventListener('change', async (event) => {
     const reason = await requestCancellationReason();
     if (!reason) {
       select.value = previousStatus || '';
-      if (message) message.textContent = 'Order cancellation was dismissed.';
+      if (message) message.textContent = appT('Order cancellation was dismissed.');
       return;
     }
     cancellationReason = reason;
@@ -466,7 +468,7 @@ document.addEventListener('change', async (event) => {
   const formData = new FormData(form);
   if (selectedStatus === 'cancelled') formData.set('reason', cancellationReason.trim());
   select.disabled = true;
-  if (message) message.textContent = 'Updating order status…';
+  if (message) message.textContent = appT('Updating order status…');
   try {
     const response = await fetch(form.action, { method: 'POST', body: formData, headers: { Accept: 'application/json' }, credentials: 'same-origin' });
     const result = await response.json();
@@ -476,7 +478,7 @@ document.addEventListener('change', async (event) => {
     select.value = result.status;
     select.className = `${orderStatusBaseClasses} ${orderStatusClasses[result.status] || orderStatusClasses.received}`;
     select.disabled = result.allowed_statuses.length === 0;
-    if (message) message.textContent = `Order status changed to ${result.status_label}.`;
+    if (message) message.textContent = appT('Order status changed to {status}.', { status: appT(result.status_label) });
     if (result.status === 'cancelled') {
       const orderCode = form.closest('tr')?.querySelector('td:nth-child(2) a')?.textContent.trim();
       showOrderActionNotice(`${orderCode ? `${orderCode}: ` : ''}Order cancelled. The reason was saved in order history.`);
@@ -485,7 +487,7 @@ document.addEventListener('change', async (event) => {
   } catch (error) {
     select.value = previousStatus || selectedStatus;
     select.disabled = false;
-    if (message) message.textContent = error.message || 'Could not update order status.';
+    if (message) message.textContent = error.message || appT('Could not update order status.');
     showOrderActionNotice(error.message || 'Could not update order status.', 'error');
   }
 });

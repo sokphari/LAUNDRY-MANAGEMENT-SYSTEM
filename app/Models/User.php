@@ -11,7 +11,7 @@ final class User
     /** @return array<string, mixed>|false */
     public static function findById(PDO $database, int $id): array|false
     {
-        $statement = $database->prepare('SELECT id, full_name, username, email, role, is_active FROM users WHERE id = :id LIMIT 1');
+        $statement = $database->prepare('SELECT id, full_name, gender, profile, username, email, role, is_active FROM users WHERE id = :id LIMIT 1');
         $statement->execute(['id' => $id]);
         return $statement->fetch();
     }
