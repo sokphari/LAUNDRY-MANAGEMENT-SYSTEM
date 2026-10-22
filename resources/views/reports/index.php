@@ -33,7 +33,4 @@
     </div>
     <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800"><h2 class="mb-4 text-lg font-semibold">Top services by revenue</h2><div class="overflow-x-auto"><table class="w-full min-w-[440px] text-left text-sm"><thead class="text-xs uppercase text-zinc-500"><tr><th class="py-2">Service</th><th class="py-2 text-right">Quantity</th><th class="py-2 text-right">Revenue</th></tr></thead><tbody class="divide-y divide-zinc-100 dark:divide-zinc-800"><?php foreach ($services as $row): ?><tr><th scope="row" class="py-3 font-medium"><?= e($row['service_name']) ?></th><td class="py-3 text-right tabular-nums"><?= e(rtrim(rtrim(number_format((float)$row['quantity'],2,'.',','),'0'),'.')) ?></td><td class="py-3 text-right tabular-nums"><?= e(format_khr($row['revenue'])) ?> KHR</td></tr><?php endforeach; ?><?php if ($services===[]): ?><tr><td colspan="3" class="py-8 text-center text-zinc-500"><?= e(t('No services found for this date range.')) ?></td></tr><?php endif; ?></tbody></table></div></section>
 </section>
-<script>
-(() => { const form=document.getElementById('reports-filter'); const range=document.getElementById('reports-range'); const boxes=[...document.querySelectorAll('[data-report-custom]')]; const toggle=()=>boxes.forEach(el=>el.classList.toggle('hidden',range.value!=='custom')); range.addEventListener('change',()=>{toggle(); if(range.value!=='custom') form.requestSubmit();}); form.addEventListener('change',e=>{if(e.target.matches('input[type=date]')&&document.getElementById('reports-from').value&&document.getElementById('reports-to').value) form.requestSubmit();});
-})();
-</script>
+

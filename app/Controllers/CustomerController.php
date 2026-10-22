@@ -90,13 +90,20 @@ final class CustomerController
     /** @param array<string, mixed> $databaseConfig */
     public static function store(array $databaseConfig): void
     {
-        if (!self::verifyCsrf()) {
+        $wantsJson = self::wantsJson();
+        if (!self::verifyCsrf($wantsJson)) {
             return;
         }
 
         $customer = self::formInput();
         $errors = self::validate($customer);
         if ($errors !== []) {
+            if ($wantsJson) {
+                http_response_code(422);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['message' => 'Please correct the highlighted customer information.', 'errors' => $errors], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                return;
+            }
             self::renderForm('Add Customer', $customer, $errors, '/customers/create');
             return;
         }
@@ -113,10 +120,21 @@ final class CustomerController
         } catch (PDOException $exception) {
             if (isset($database) && $database->inTransaction()) $database->rollBack();
             self::logDatabaseError($exception);
+            if ($wantsJson) {
+                http_response_code(500);
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode(['message' => self::databaseErrorMessage($exception, 'save')], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+                return;
+            }
             self::renderForm('Add Customer', $customer, ['form' => self::databaseErrorMessage($exception, 'save')], '/customers/create');
             return;
         }
 
+        if ($wantsJson) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Customer added successfully.', 'customer_id' => $customerId], JSON_THROW_ON_ERROR | JSON_INVALID_UTF8_SUBSTITUTE);
+            return;
+        }
         self::setFlash('success', 'Customer added successfully.');
         header('Location: /customers', true, 303);
     }
@@ -332,15 +350,25 @@ final class CustomerController
         return $customer;
     }
 
-    private static function verifyCsrf(): bool
+    private static function verifyCsrf(bool $asJson = false): bool
     {
         if (Csrf::verify(isset($_POST['_csrf_token']) && is_string($_POST['_csrf_token']) ? $_POST['_csrf_token'] : null)) {
             return true;
         }
 
         http_response_code(419);
+        if ($asJson) {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['message' => 'Your session expired. Reload and try again.'], JSON_INVALID_UTF8_SUBSTITUTE);
+            return false;
+        }
         echo 'Your session expired. Please go back and try again.';
         return false;
+    }
+
+    private static function wantsJson(): bool
+    {
+        return str_contains(strtolower($_SERVER['HTTP_ACCEPT'] ?? ''), 'application/json');
     }
 
     /** @return array{csrfToken: string, user: array<string, mixed>|null} */

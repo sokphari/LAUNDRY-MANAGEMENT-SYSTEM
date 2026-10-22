@@ -1,3 +1,5 @@
+const initializeOrdersPage = () => {
+const mainContent = document.querySelector('main');
 const receiptFormat = document.querySelector('[data-receipt-format]');
 const appT = (message, values = {}) => window.appTranslate(message, values);
 
@@ -9,16 +11,21 @@ document.querySelectorAll('[data-print-document]').forEach((button) => {
   });
 });
 
-window.addEventListener('afterprint', () => {
+if (!window.__ordersAfterPrintBound) {
+  window.__ordersAfterPrintBound = true;
+  window.addEventListener('afterprint', () => {
   delete document.body.dataset.printType;
   delete document.body.dataset.printSize;
-});
+  });
+}
 
 const printParams = new URLSearchParams(location.search);
 if (['ticket', 'payment'].includes(printParams.get('print'))) {
   document.body.dataset.printType = printParams.get('print');
   document.body.dataset.printSize = ['58', 'a4'].includes(printParams.get('size')) ? printParams.get('size') : '80';
-  window.addEventListener('load', () => window.setTimeout(() => window.print(), 150));
+    const printDocument = () => window.setTimeout(() => window.print(), 150);
+    if (document.readyState === 'complete') printDocument();
+    else window.addEventListener('load', printDocument, { once: true });
 }
 
 const cancelOrderDialog = document.querySelector('#cancel-order-dialog');
@@ -232,7 +239,7 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
       customerOptions.find((option) => !option.classList.contains('hidden'))?.click();
     }
   });
-  document.addEventListener('click', (event) => {
+  mainContent?.addEventListener('click', (event) => {
     if (customerPicker && !customerPicker.contains(event.target)) closeCustomerMenu();
   });
   form.addEventListener('submit', (event) => {
@@ -536,10 +543,10 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
     event.preventDefault();
     loadOrders(Number(link.dataset.orderPage) || 1);
   });
-  window.addEventListener('orders:refresh', () => loadOrders());
+  mainContent?.addEventListener('orders:refresh', () => loadOrders());
 }
 
-document.addEventListener('change', async (event) => {
+mainContent?.addEventListener('change', async (event) => {
   const select = event.target.closest('[data-order-status]');
   const form = select?.closest('[data-order-status-form]');
   if (!select || !form) return;
@@ -574,7 +581,7 @@ document.addEventListener('change', async (event) => {
       const orderCode = form.closest('tr')?.querySelector('td:nth-child(2) a')?.textContent.trim();
       showOrderActionNotice(`${orderCode ? `${orderCode}: ` : ''}Order cancelled. The reason was saved in order history.`);
     }
-    window.dispatchEvent(new Event('orders:refresh'));
+    mainContent?.dispatchEvent(new Event('orders:refresh')); 
   } catch (error) {
     select.value = previousStatus || selectedStatus;
     select.disabled = false;
@@ -583,7 +590,7 @@ document.addEventListener('change', async (event) => {
   }
 });
 
-document.addEventListener('click', (event) => {
+mainContent?.addEventListener('click', (event) => {
   const paymentButton = event.target.closest('[data-record-payment]');
   if (paymentButton) {
     const dialog = document.querySelector('#record-payment-dialog');
@@ -619,3 +626,5 @@ document.addEventListener('click', (event) => {
   const closeButton = event.target.closest('[data-refund-dialog-close]');
   if (closeButton) closeButton.closest('dialog')?.close();
 });
+};
+document.addEventListener('app:page-ready', initializeOrdersPage);

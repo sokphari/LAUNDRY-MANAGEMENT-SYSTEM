@@ -7,10 +7,11 @@
     </div>
 
     <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200 sm:p-7 dark:bg-dark-card dark:ring-zinc-800">
+        <p id="customer-create-status" class="mb-5 hidden rounded-lg border px-4 py-3 text-sm" role="status" aria-live="polite"></p>
         <?php if (isset($errors['form'])): ?>
             <p role="alert" class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"><?= e(t($errors['form'])) ?></p>
         <?php endif; ?>
-        <form method="post" action="<?= e($formAction) ?>" class="space-y-4">
+        <form id="customer-form" method="post" action="<?= e($formAction) ?>" <?= $formAction === '/customers/create' ? 'data-customer-create' : '' ?> class="space-y-4">
             <input type="hidden" name="_csrf_token" value="<?= e($csrfToken) ?>">
             <div class="grid gap-4 sm:grid-cols-2">
             <div>

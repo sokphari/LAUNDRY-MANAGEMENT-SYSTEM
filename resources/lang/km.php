@@ -46,6 +46,7 @@ return [
     'Action' => 'សកម្មភាព',
     'View customer' => 'មើលអតិថិជន',
     'Delete customer' => 'លុបអតិថិជន',
+    'Confirm customer deactivation' => 'បញ្ជាក់ការបិទដំណើរការអតិថិជន',
     'No customers matched your search.' => 'រកមិនឃើញអតិថិជនដែលត្រូវនឹងការស្វែងរកទេ។',
     'No customers yet. Add your first customer to get started.' => 'មិនទាន់មានអតិថិជនទេ។ សូមបន្ថែមអតិថិជនដំបូង។',
     'Showing {first}–{last} of {total} customer{matching}.' => 'បង្ហាញ {first}–{last} ក្នុងចំណោមអតិថិជន {total}{matching}។',

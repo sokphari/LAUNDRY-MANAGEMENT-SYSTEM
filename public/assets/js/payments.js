@@ -1,3 +1,4 @@
+const initializePaymentsPage = () => {
 const paymentsForm = document.querySelector('#payments-search-form');
 const paymentRows = document.querySelector('#payment-transaction-rows');
 const paymentResultCount = document.querySelector('#payments-result-count');
@@ -225,3 +226,5 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
   updateExportLinks();
   loadTransactions(currentPage);
 }
+};
+document.addEventListener('app:page-ready', initializePaymentsPage);

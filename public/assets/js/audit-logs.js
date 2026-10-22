@@ -1,3 +1,4 @@
+const initializeAuditlogsPage = () => {
 const auditForm = document.querySelector('#audit-search-form');
 const auditRows = document.querySelector('#audit-log-rows');
 const auditPagination = document.querySelector('#audit-pagination');
@@ -340,12 +341,8 @@ if (auditForm && auditRows && auditPagination && auditCount) {
     event.preventDefault();
     loadAuditLogs(Number(link.dataset.auditPage) || 1, 'push');
   });
-  window.addEventListener('popstate', () => {
-    const params = new URLSearchParams(location.search);
-    if (searchInput) searchInput.value = params.get('q') || '';
-    filterInputs.forEach((input) => { input.value = params.get(input.name) || ''; });
-    toggleCustomDates();
-    loadAuditLogs(Math.max(1, Number(params.get('page')) || 1), 'none');
-  });
+
   toggleCustomDates();
 }
+};
+document.addEventListener('app:page-ready', initializeAuditlogsPage);

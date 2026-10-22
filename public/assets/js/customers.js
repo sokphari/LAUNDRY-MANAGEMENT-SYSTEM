@@ -1,3 +1,4 @@
+const initializeCustomersPage = () => {
 (() => {
   const form = document.getElementById('customer-search-form');
   const input = document.getElementById('customer-search');
@@ -254,3 +255,5 @@
     search(Number(link.dataset.customerPage) || 1);
   });
 })();
+};
+document.addEventListener('app:page-ready', initializeCustomersPage);

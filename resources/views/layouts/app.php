@@ -13,14 +13,11 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     <script src="/assets/js/i18n.js" defer></script>
     <script src="/assets/js/language-menu.js" defer></script>
     <script src="/assets/js/actions.js" defer></script>
-    <script src="/assets/js/customers.js" defer></script>
-    <script src="/assets/js/services.js" defer></script>
-    <script src="/assets/js/orders.js" defer></script>
-    <script src="/assets/js/payments.js" defer></script>
-    <script src="/assets/js/dashboard.js" defer></script>
     <script src="/assets/js/notifications.js" defer></script>
+    <script src="/assets/js/navigation.js" defer></script>
 </head>
 <body class="min-h-screen bg-[#F8FAFC] text-zinc-900 dark:bg-dark-base dark:text-white">
+    <div id="app-navigation-progress" class="app-navigation-progress" aria-hidden="true"><span></span></div>
     <button id="sidebar-backdrop" type="button" aria-label="Close navigation" class="fixed inset-0 z-30 hidden bg-black/50 md:hidden"></button>
     <aside id="app-sidebar" class="app-sidebar fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-zinc-200 bg-white transition-[width,transform] duration-200 md:translate-x-0 dark:border-zinc-800 dark:bg-dark-card">
         <a href="/dashboard" class="flex h-20 shrink-0 items-center gap-3 border-b border-zinc-100 px-6 font-bold tracking-tight dark:border-zinc-800">
@@ -36,7 +33,7 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
             ? 'bg-violet-100 text-violet-800 dark:bg-violet-950/70 dark:text-violet-200'
             : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white');
         ?>
-        <div class="sidebar-account shrink-0 border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div id="sidebar-account" class="sidebar-account shrink-0 border-t border-zinc-200 p-4 dark:border-zinc-800">
             <p class="sidebar-section-title mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500"><?= e(t('Account')) ?></p>
             <a href="/profile" <?= $profileActive ? 'aria-current="page"' : '' ?> title="<?= e(t('My Profile')) ?>" class="<?= $profileLinkClasses ?>">
                 <svg class="module-icon size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-3.8 3.1-5.8 7-5.8s6.5 2 7 5.8"/></svg>
@@ -62,10 +59,11 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
                 <?php require dirname(__DIR__) . '/components/profile-menu.php'; ?>
             </div>
         </header>
-        <main class="w-full px-4 py-5 sm:px-5 md:px-6 md:py-6">
+        <main tabindex="-1" class="w-full px-4 py-5 transition-opacity duration-150 sm:px-5 md:px-6 md:py-6">
             <?= $content ?>
         </main>
     </div>
+    <?php require dirname(__DIR__) . '/components/confirm-dialog.php'; ?>
     <script src="/assets/js/profile-menu.js" defer></script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+const initializeServicesPage = () => {
 document.querySelectorAll('[data-service-type]').forEach((select) => {
   const form = select.closest('form');
   const customField = form?.querySelector('[data-custom-service-field]');
@@ -177,3 +178,5 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
     }
   });
 }
+};
+document.addEventListener('app:page-ready', initializeServicesPage);

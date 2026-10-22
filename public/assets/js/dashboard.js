@@ -1,3 +1,10 @@
+let dashboardClockTimer = null;
+let dashboardVisibilityHandler = null;
+const initializeDashboardPage = () => {
+  if (dashboardClockTimer) window.clearInterval(dashboardClockTimer);
+  if (dashboardVisibilityHandler) document.removeEventListener('visibilitychange', dashboardVisibilityHandler);
+  dashboardRequest?.abort();
+  if (!document.querySelector('[data-dashboard-range]') && !document.querySelector('#dashboard-live-clock')) return;
 const dashboardRange = document.querySelector('[data-dashboard-range]');
 const dashboardCustomRangeFields = document.querySelectorAll('[data-dashboard-custom-range]');
 const dashboardForm = document.querySelector('#dashboard-filter-form');
@@ -352,9 +359,10 @@ const updateDashboardClock = () => {
   dashboardClock.dateTime = now.toISOString();
 };
 updateDashboardClock();
-window.setInterval(updateDashboardClock, 1000);
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) updateDashboardClock();
-});
+dashboardClockTimer = window.setInterval(updateDashboardClock, 1000);
+  dashboardVisibilityHandler = () => { if (!document.hidden) updateDashboardClock(); };
+  document.addEventListener('visibilitychange', dashboardVisibilityHandler);
 
 updateDashboardCustomRange();
+};
+document.addEventListener('app:page-ready', initializeDashboardPage);
