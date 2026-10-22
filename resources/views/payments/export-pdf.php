@@ -1,7 +1,7 @@
 <main class="report">
     <header class="report-header">
         <div>
-            <img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="export-brand-logo">
+            <?php $brandLockupClass = 'export-brand-lockup'; require dirname(__DIR__) . '/components/brand-lockup.php'; unset($brandLockupClass); ?>
             <h1>Payments &amp; Refunds</h1>
             <p>Exported <?= e($exportedAt) ?></p>
         </div>

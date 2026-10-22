@@ -99,13 +99,13 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
 
       const statusCell = makeCell(row, 'max-w-xs px-5 py-4');
       const statusText = document.createElement('span');
-      statusText.className = `inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${status === 'pending' ? 'bg-yellow-500 text-black' : status === 'recorded' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`;
+      statusText.className = `inline-flex rounded-full px-3 py-1.5 text-sm font-bold leading-none shadow-sm ${status === 'pending' ? 'bg-amber-400 text-amber-950 dark:bg-amber-300 dark:text-amber-950' : status === 'recorded' ? 'bg-emerald-700 text-white dark:bg-emerald-400 dark:text-emerald-950' : 'bg-red-700 text-white dark:bg-red-400 dark:text-red-950'}`;
       statusText.textContent = t(status[0].toUpperCase() + status.slice(1));
       statusCell.append(statusText);
       const reasonText = transaction.reason || transaction.void_reason;
       if (reasonText) {
         const reason = document.createElement('p');
-        reason.className = 'mt-1 break-words text-xs text-zinc-500 dark:text-zinc-400';
+        reason.className = 'mt-1 break-words text-sm text-zinc-700 dark:text-zinc-300';
         reason.textContent = reasonText;
         statusCell.append(reason);
       }
@@ -123,22 +123,24 @@ if (paymentsForm && paymentRows && paymentResultCount && paymentPagination && pa
       const returnUrl = `${location.pathname}${location.search}`;
       viewLink.href = `/orders/${orderId}${isPayment ? `?payment_id=${paymentId}&return=${encodeURIComponent(returnUrl)}` : ''}`;
       viewLink.title = t(isPayment ? 'View payment details' : 'View order');
-      viewLink.className = 'rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:border-primary hover:text-primary dark:border-zinc-700 dark:text-zinc-200';
-      viewLink.textContent = t('View');
+      viewLink.setAttribute('aria-label', viewLink.title);
+      viewLink.className = 'inline-grid size-9 place-items-center rounded-lg border border-zinc-200 text-zinc-600 transition hover:border-primary hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:text-zinc-300';
+      viewLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
       actions.append(viewLink);
       if (isPayment && status === 'recorded') {
         const printLink = document.createElement('a');
         printLink.href = `/orders/${orderId}?print=payment&payment_id=${paymentId}&size=80`;
         printLink.title = t('Print receipt for payment #{payment}', { payment: paymentId });
-        printLink.className = 'rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover';
-        printLink.textContent = t('Print Receipt');
-        printLink.className = 'whitespace-nowrap rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-hover';
+        printLink.setAttribute('aria-label', printLink.title);
+        printLink.className = 'inline-grid size-9 place-items-center rounded-lg bg-primary text-white transition hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary';
+        printLink.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M7 14h10v7H7z"/><path d="M17 11h.01"/></svg>';
         actions.append(printLink);
       } else if (isPayment) {
         const correctedLabel = document.createElement('span');
-        correctedLabel.className = 'px-2 py-1.5 text-xs text-zinc-400';
+        correctedLabel.className = 'inline-grid size-9 cursor-not-allowed place-items-center rounded-lg border border-zinc-200 text-zinc-300 dark:border-zinc-800 dark:text-zinc-600';
         correctedLabel.title = t('Corrected payments cannot be printed');
-        correctedLabel.textContent = '—';
+        correctedLabel.setAttribute('aria-label', correctedLabel.title);
+        correctedLabel.innerHTML = '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5h-2M7 14h10v7H7z"/><path d="m9 9 6 6m0-6-6 6"/></svg>';
         actions.append(correctedLabel);
       }
       actionCell.append(actions);

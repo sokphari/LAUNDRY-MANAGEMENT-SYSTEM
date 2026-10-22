@@ -143,7 +143,7 @@ final class DashboardService
             'orderStatuses' => $orderStatuses,
             'yearlyRevenue' => $yearlyRevenue,
         ];
-        $data['staffActivities'] = self::staffActivities($database, $rangeStart, $rangeEnd);
+        $data['staffActivities'] = self::staffActivitiesBatched($database, $rangeStart, $rangeEnd);
         return $data;
     }
 
@@ -264,30 +264,89 @@ final class DashboardService
     }
 
     /** @return list<array<string, mixed>> */
-    private static function staffActivities(PDO $database, ?string $from, ?string $to): array
+    private static function staffActivitiesBatched(PDO $database, ?string $from, ?string $to): array
     {
         $staff = $database->query("SELECT id, full_name, username FROM users WHERE role = 'staff' ORDER BY is_active DESC, full_name")->fetchAll();
+        if ($staff === []) return [];
+
+        $orderFilters = [];
+        $orderParameters = [];
+        if ($from !== null) { $orderFilters[] = 'o.received_at >= :orders_from'; $orderParameters['orders_from'] = $from; }
+        if ($to !== null) { $orderFilters[] = 'o.received_at < :orders_to'; $orderParameters['orders_to'] = $to; }
+        $orders = $database->prepare(
+            'SELECT o.created_by AS user_id, COUNT(*) AS total
+             FROM orders o INNER JOIN users u ON u.id = o.created_by AND u.role = \'staff\'
+             ' . ($orderFilters === [] ? '' : 'WHERE ' . implode(' AND ', $orderFilters) . ' ') . 'GROUP BY o.created_by'
+        );
+        $orders->execute($orderParameters);
+        $ordersByStaff = [];
+        foreach ($orders->fetchAll(PDO::FETCH_ASSOC) as $row) $ordersByStaff[(int) $row['user_id']] = (int) $row['total'];
+
+        $paymentFilters = ['p.voided_at IS NULL'];
+        $paymentParameters = [];
+        if ($from !== null) { $paymentFilters[] = 'p.paid_at >= :payments_from'; $paymentParameters['payments_from'] = $from; }
+        if ($to !== null) { $paymentFilters[] = 'p.paid_at < :payments_to'; $paymentParameters['payments_to'] = $to; }
+        $payments = $database->prepare(
+            'SELECT p.received_by AS user_id, COALESCE(SUM(p.amount), 0) AS total
+             FROM order_payments p INNER JOIN users u ON u.id = p.received_by AND u.role = \'staff\'
+             WHERE ' . implode(' AND ', $paymentFilters) . ' GROUP BY p.received_by'
+        );
+        $payments->execute($paymentParameters);
+        $paymentsByStaff = [];
+        foreach ($payments->fetchAll(PDO::FETCH_ASSOC) as $row) $paymentsByStaff[(int) $row['user_id']] = (float) $row['total'];
+
+        $refundFilters = ['p.voided_at IS NULL'];
+        $refundParameters = [];
+        if ($from !== null) { $refundFilters[] = 'r.refunded_at >= :refunds_from'; $refundParameters['refunds_from'] = $from; }
+        if ($to !== null) { $refundFilters[] = 'r.refunded_at < :refunds_to'; $refundParameters['refunds_to'] = $to; }
+        $refunds = $database->prepare(
+            'SELECT r.refunded_by AS user_id, COALESCE(SUM(r.amount), 0) AS total
+             FROM order_payment_refunds r
+             INNER JOIN order_payments p ON p.id = r.payment_id
+             INNER JOIN users u ON u.id = r.refunded_by AND u.role = \'staff\'
+             WHERE ' . implode(' AND ', $refundFilters) . ' GROUP BY r.refunded_by'
+        );
+        $refunds->execute($refundParameters);
+        $refundsByStaff = [];
+        foreach ($refunds->fetchAll(PDO::FETCH_ASSOC) as $row) $refundsByStaff[(int) $row['user_id']] = (float) $row['total'];
+
+        $activityFilters = ['filtered.user_id IS NOT NULL'];
+        $activityParameters = [];
+        if ($from !== null) { $activityFilters[] = 'filtered.created_at >= :activity_from'; $activityParameters['activity_from'] = $from; }
+        if ($to !== null) { $activityFilters[] = 'filtered.created_at < :activity_to'; $activityParameters['activity_to'] = $to; }
+        $activities = $database->prepare(
+            'SELECT a.user_id, a.summary, a.created_at
+             FROM audit_logs a
+             INNER JOIN (
+                 SELECT candidates.user_id, MAX(candidates.id) AS latest_id
+                 FROM audit_logs candidates
+                 INNER JOIN (
+                     SELECT filtered.user_id, MAX(filtered.created_at) AS latest_created_at
+                     FROM audit_logs filtered
+                     INNER JOIN users staff_user ON staff_user.id = filtered.user_id AND staff_user.role = \'staff\'
+                     WHERE ' . implode(' AND ', $activityFilters) . '
+                     GROUP BY filtered.user_id
+                 ) latest ON latest.user_id = candidates.user_id AND latest.latest_created_at = candidates.created_at
+                 GROUP BY candidates.user_id
+             ) picked ON picked.latest_id = a.id'
+        );
+        $activities->execute($activityParameters);
+        $activityByStaff = [];
+        foreach ($activities->fetchAll(PDO::FETCH_ASSOC) as $row) $activityByStaff[(int) $row['user_id']] = $row;
+
         $rows = [];
         foreach ($staff as $person) {
             $id = (int) $person['id'];
-            $orderWhere = 'created_by = :staff_id'; $orderParams = ['staff_id' => $id];
-            if ($from !== null) { $orderWhere .= ' AND received_at >= :from_date'; $orderParams['from_date'] = $from; }
-            if ($to !== null) { $orderWhere .= ' AND received_at < :to_date'; $orderParams['to_date'] = $to; }
-            $orderStatement = $database->prepare("SELECT COUNT(*) FROM orders WHERE $orderWhere"); $orderStatement->execute($orderParams);
-            $paymentWhere = 'received_by = :staff_id AND voided_at IS NULL'; $paymentParams = ['staff_id' => $id];
-            if ($from !== null) { $paymentWhere .= ' AND paid_at >= :from_date'; $paymentParams['from_date'] = $from; }
-            if ($to !== null) { $paymentWhere .= ' AND paid_at < :to_date'; $paymentParams['to_date'] = $to; }
-            $paymentStatement = $database->prepare("SELECT COALESCE(SUM(amount),0) FROM order_payments WHERE $paymentWhere"); $paymentStatement->execute($paymentParams);
-            $refundWhere = 'r.refunded_by = :staff_id AND p.voided_at IS NULL'; $refundParams = ['staff_id' => $id];
-            if ($from !== null) { $refundWhere .= ' AND refunded_at >= :from_date'; $refundParams['from_date'] = $from; }
-            if ($to !== null) { $refundWhere .= ' AND refunded_at < :to_date'; $refundParams['to_date'] = $to; }
-            $refundStatement = $database->prepare("SELECT COALESCE(SUM(r.amount),0) FROM order_payment_refunds r INNER JOIN order_payments p ON p.id = r.payment_id WHERE $refundWhere"); $refundStatement->execute($refundParams);
-            $activityWhere = 'user_id = :staff_id'; $activityParams = ['staff_id' => $id];
-            if ($from !== null) { $activityWhere .= ' AND created_at >= :from_date'; $activityParams['from_date'] = $from; }
-            if ($to !== null) { $activityWhere .= ' AND created_at < :to_date'; $activityParams['to_date'] = $to; }
-            $latest = $database->prepare("SELECT summary, created_at FROM audit_logs WHERE $activityWhere ORDER BY created_at DESC, id DESC LIMIT 1"); $latest->execute($activityParams);
-            $lastActivity = $latest->fetch() ?: null;
-            $rows[] = ['user_id' => $id, 'full_name' => $person['full_name'], 'username' => $person['username'], 'orders' => (int) $orderStatement->fetchColumn(), 'payments' => (float) $paymentStatement->fetchColumn() - (float) $refundStatement->fetchColumn(), 'last_activity' => $lastActivity['summary'] ?? 'No activity in this date range', 'last_activity_at' => isset($lastActivity['created_at']) ? date('d M Y, H:i', strtotime((string) $lastActivity['created_at'])) : '—'];
+            $activity = $activityByStaff[$id] ?? null;
+            $rows[] = [
+                'user_id' => $id,
+                'full_name' => $person['full_name'],
+                'username' => $person['username'],
+                'orders' => $ordersByStaff[$id] ?? 0,
+                'payments' => ($paymentsByStaff[$id] ?? 0.0) - ($refundsByStaff[$id] ?? 0.0),
+                'last_activity' => $activity['summary'] ?? 'No activity in this date range',
+                'last_activity_at' => isset($activity['created_at']) ? date('d M Y, H:i', strtotime((string) $activity['created_at'])) : '—',
+            ];
         }
         return $rows;
     }

@@ -13,7 +13,7 @@ foreach ($report['statuses'] as $status) $statusMap[strtolower($status['label'])
 ?>
 <main class="business-report">
     <header class="business-report-header">
-        <div class="brand-lockup"><img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="report-brand-logo"></div>
+        <?php $brandLockupClass = 'report-brand-lockup'; require dirname(__DIR__) . '/components/brand-lockup.php'; unset($brandLockupClass); ?>
         <div class="report-meta"><p>Generated: <?= e($exportedAt) ?></p><p>Prepared by: <?= e($preparedBy) ?></p><p>Currency: KHR</p></div>
     </header>
     <div class="brand-rule"></div>

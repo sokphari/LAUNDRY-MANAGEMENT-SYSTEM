@@ -222,6 +222,9 @@ $router->get('/services/{id}', static function (string $id) use ($databaseConfig
 $router->post('/services/{id}/delete', static function (string $id) use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'services.manage')) ServiceController::deactivate($id, $databaseConfig);
 });
+$router->post('/services/{id}/delete-unused', static function (string $id) use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'services.manage')) ServiceController::deleteUnused($id, $databaseConfig);
+});
 $router->post('/services/{id}/status', static function (string $id) use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'services.manage')) ServiceController::setStatus($id, $databaseConfig);
 });

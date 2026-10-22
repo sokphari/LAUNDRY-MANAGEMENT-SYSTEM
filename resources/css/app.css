@@ -5,6 +5,43 @@
 @source "../../app";
 @source "../../public/assets/js";
 
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.brand-mark-image {
+  display: block;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+}
+
+.brand-wordmark {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  font-size: 0.98rem;
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+
+.brand-wordmark-primary { color: #6d28d9; }
+.brand-wordmark-secondary { color: #18181b; }
+.dark .brand-wordmark-secondary { color: #f4f4f5; }
+
+.login-brand-lockup {
+  display: flex;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.login-brand-lockup .brand-mark-image { width: 3.75rem; height: 3.75rem; }
+.login-brand-lockup .brand-wordmark { font-size: 1.45rem; }
+
 .app-navigation-progress {
   position: fixed;
   inset: 0 0 auto;
@@ -131,12 +168,12 @@ main[aria-busy="true"] { opacity: 0.72; }
     padding-right: 0;
   }
 
-  body.sidebar-collapsed .app-sidebar .sidebar-brand-logo {
-    display: none;
+  body.sidebar-collapsed .app-sidebar .sidebar-brand-lockup {
+    justify-content: center;
   }
 
-  body.sidebar-collapsed .app-sidebar .sidebar-brand-fallback {
-    display: grid;
+  body.sidebar-collapsed .app-sidebar .sidebar-brand-lockup .brand-wordmark {
+    display: none;
   }
 
   body.sidebar-collapsed .app-sidebar .module-row {
@@ -239,14 +276,19 @@ main[aria-busy="true"] { opacity: 0.72; }
     font-size: 15pt;
   }
 
-  .receipt-brand-logo {
-    display: block;
-    width: 44mm;
-    max-width: 100%;
-    height: auto;
-    max-height: 20mm;
+  .receipt-brand-lockup {
+    display: flex;
+    justify-content: center;
     margin: 0 auto 2mm;
-    object-fit: contain;
+  }
+
+  .receipt-brand-lockup .brand-mark-image {
+    width: 12mm;
+    height: 12mm;
+  }
+
+  .receipt-brand-lockup .brand-wordmark {
+    font-size: 13pt;
   }
 
   .receipt-header p,

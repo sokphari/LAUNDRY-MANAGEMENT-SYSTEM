@@ -242,6 +242,44 @@ final class ServiceController
         header('Location: /services', true, 303);
     }
 
+    /** Permanently remove a service only if no order has ever used it. @param array<string, mixed> $databaseConfig */
+    public static function deleteUnused(string $id, array $databaseConfig): void
+    {
+        if (!self::verifyCsrf()) return;
+        if (!ctype_digit($id) || (int) $id < 1) { http_response_code(404); echo '404 Not Found'; return; }
+
+        try {
+            $database = Database::connect($databaseConfig);
+            $database->beginTransaction();
+            $before = Service::findForUpdate($database, (int) $id);
+            if ($before === false) {
+                $database->rollBack();
+                http_response_code(404);
+                echo '404 Not Found';
+                return;
+            }
+            if (!Service::deleteIfUnused($database, (int) $id)) {
+                $database->rollBack();
+                self::flash('error', 'This service has order history and cannot be deleted. Deactivate it instead.');
+                header('Location: /services', true, 303);
+                return;
+            }
+            AuditLogService::record($database, (int) (Auth::user()['id'] ?? 0), 'service.deleted', 'service', (int) $id, 'Deleted unused service ' . $before['name'], [
+                'before' => ['name' => $before['name'], 'description' => $before['description'], 'price' => (float) $before['price'], 'billing_unit' => $before['billing_unit'], 'is_active' => (bool) $before['is_active']],
+            ]);
+            $database->commit();
+        } catch (PDOException $exception) {
+            if (isset($database) && $database->inTransaction()) $database->rollBack();
+            self::log($exception);
+            self::flash('error', 'Could not delete the service. Please try again.');
+            header('Location: /services', true, 303);
+            return;
+        }
+
+        self::flash('success', 'Service deleted.');
+        header('Location: /services', true, 303);
+    }
+
     /** @return array{name: string, service_type: string, custom_name: string, description: string, price: string, billing_unit: string} */
     private static function input(): array
     {

@@ -15,11 +15,11 @@
   const updateBadge = (count, failedAttempts = 0) => {
     const unreadAlerts = Math.max(0, Number(count) || 0);
     const recentFailures = Math.max(0, Number(failedAttempts) || 0);
-    unreadCount = recentFailures || unreadAlerts;
+    unreadCount = unreadAlerts;
     badge.hidden = unreadCount === 0;
     badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
     toggle.setAttribute('aria-label', recentFailures > 0
-      ? `Notifications, ${recentFailures} failed sign-in attempts in the last 15 minutes`
+      ? `Notifications, ${unreadAlerts} unread, ${recentFailures} failed sign-in attempts in the last 15 minutes`
       : unreadAlerts > 0 ? `Notifications, ${unreadAlerts} unread` : 'Notifications');
     markReadButton.hidden = unreadAlerts === 0;
   };
@@ -52,7 +52,7 @@
       content.className = 'min-w-0 flex-1';
       const title = document.createElement('p');
       title.className = 'text-sm font-medium text-zinc-900 dark:text-zinc-100';
-      title.textContent = String(notification.summary || notification.action_label || 'Security event');
+      title.textContent = t(String(notification.summary || notification.action_label || 'Security event'));
       if (notification.action === 'auth.login_failed' && Number(notification.failed_attempts) > 0) {
         const count = document.createElement('span');
         count.className = 'mt-1 inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:bg-red-950 dark:text-red-300';
@@ -61,7 +61,7 @@
       }
       const metadata = document.createElement('p');
       metadata.className = 'mt-1 text-xs text-zinc-500 dark:text-zinc-400';
-      const actor = notification.actor ? String(notification.actor) : 'Unverified sign-in';
+      const actor = notification.actor ? String(notification.actor) : t('Unverified sign-in');
       const timestamp = String(notification.created_display || '');
       metadata.textContent = timestamp ? `${actor} · ${timestamp}` : actor;
       content.append(title, metadata);
@@ -94,7 +94,7 @@
       if (panel && !panel.hidden) renderNotifications(result.notifications);
     } catch (error) {
       if (error.name === 'AbortError') return;
-      if (!panel.hidden) showMessage(error.message || 'Notifications are temporarily unavailable.');
+      if (!panel.hidden) showMessage(t(error.message || 'Notifications are temporarily unavailable.'));
     }
   };
 

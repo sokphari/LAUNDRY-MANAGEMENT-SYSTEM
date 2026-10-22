@@ -42,6 +42,6 @@ final class Router
         }
 
         http_response_code(404);
-        echo '404 Not Found';
+        View::render('errors/404', ['title' => 'Page not found'], 'guest');
     }
 }

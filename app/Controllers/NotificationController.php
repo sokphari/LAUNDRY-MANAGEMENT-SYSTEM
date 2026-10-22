@@ -8,7 +8,7 @@ use App\Core\Auth;
 use App\Core\Csrf;
 use App\Core\Database;
 use App\Models\SecurityNotification;
-use PDOException;
+use Throwable;
 
 final class NotificationController
 {
@@ -23,8 +23,8 @@ final class NotificationController
 
         try {
             self::respond(SecurityNotification::forUser(Database::connect($databaseConfig), (int) $user['id'], (string) $user['role']));
-        } catch (PDOException $exception) {
-            error_log('[notifications] ' . $exception->getMessage());
+        } catch (Throwable $exception) {
+            self::logFailure($exception);
             http_response_code(503);
             self::respond(['error' => 'Notifications are temporarily unavailable.']);
         }
@@ -49,8 +49,8 @@ final class NotificationController
             $database = Database::connect($databaseConfig);
             SecurityNotification::markRead($database, (int) $user['id'], (string) $user['role']);
             self::respond(SecurityNotification::forUser($database, (int) $user['id'], (string) $user['role']));
-        } catch (PDOException $exception) {
-            error_log('[notifications] ' . $exception->getMessage());
+        } catch (Throwable $exception) {
+            self::logFailure($exception);
             http_response_code(503);
             self::respond(['error' => 'Notifications are temporarily unavailable.']);
         }
@@ -68,5 +68,15 @@ final class NotificationController
     {
         http_response_code(401);
         self::respond(['error' => 'Your session has expired. Sign in again.']);
+    }
+
+    private static function logFailure(Throwable $exception): void
+    {
+        $message = '[notifications] ' . get_class($exception) . ': ' . $exception->getMessage();
+        error_log($message);
+        $directory = BASE_PATH . '/storage/logs';
+        if (is_dir($directory) && is_writable($directory)) {
+            file_put_contents($directory . '/app.log', sprintf("[%s] %s\n", date(DATE_ATOM), $message), FILE_APPEND | LOCK_EX);
+        }
     }
 }

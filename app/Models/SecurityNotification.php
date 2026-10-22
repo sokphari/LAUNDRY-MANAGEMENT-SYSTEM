@@ -44,7 +44,8 @@ final class SecurityNotification
         }
 
         $statement = $database->prepare(
-            "SELECT a.id, a.action, a.summary, a.entity_type, a.entity_id, a.created_at, u.username AS actor,
+            "SELECT a.id, a.action, a.summary, a.entity_type, a.entity_id, a.created_at,
+                    COALESCE(u.username, target.username, JSON_UNQUOTE(JSON_EXTRACT(a.details, '$.login_identifier'))) AS actor,
                     CASE WHEN a.action = 'auth.login_failed' THEN
                         (SELECT COUNT(*) FROM audit_logs f
                          WHERE f.action = 'auth.login_failed'
@@ -53,6 +54,7 @@ final class SecurityNotification
                                LOWER(JSON_UNQUOTE(JSON_EXTRACT(a.details, '$.login_identifier'))))
                     ELSE 0 END AS failed_attempts
              FROM audit_logs a LEFT JOIN users u ON u.id = a.user_id
+             LEFT JOIN users target ON target.id = CAST(JSON_UNQUOTE(JSON_EXTRACT(a.details, '$.target_user_id')) AS UNSIGNED)
              WHERE ' . $scope . '
              ORDER BY a.id DESC LIMIT " . max(1, min(20, $limit))
         );
@@ -100,13 +102,13 @@ final class SecurityNotification
         $quotedActions = implode(',', array_map(static fn (string $action): string => "'" . $action . "'", $actions));
         if ($role === 'admin') {
             return [
-                '(a.action IN (' . $quotedActions . ") AND NOT (a.user_id = :viewer_id AND a.action IN ('auth.login','auth.logout')))",
-                ['viewer_id' => $userId],
+                '(a.action IN (' . $quotedActions . '))',
+                [],
             ];
         }
 
         return [
-            "((a.user_id = :actor_id AND a.action = 'user.password_changed')
+            "((a.user_id = :actor_id AND a.action IN ('auth.login','auth.logout','user.password_changed'))
               OR (a.entity_type = 'user' AND a.entity_id = :target_id AND a.action IN ('user.updated','user.role_changed','user.enabled','user.disabled','user.password_reset'))
               OR (a.action = 'auth.login_failed' AND CAST(JSON_UNQUOTE(JSON_EXTRACT(a.details, '$.target_user_id')) AS UNSIGNED) = :failed_target))",
             ['actor_id' => $userId, 'target_id' => $userId, 'failed_target' => $userId],

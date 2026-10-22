@@ -15,7 +15,7 @@ final class Csrf
         return $_SESSION['_csrf_token'];
     }
 
-    public static function verify(?string $submittedToken): bool
+    public static function verify(mixed $submittedToken): bool
     {
         $storedToken = $_SESSION['_csrf_token'] ?? null;
 

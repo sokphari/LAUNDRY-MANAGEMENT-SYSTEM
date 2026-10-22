@@ -41,8 +41,15 @@ final class AuthController
             return;
         }
 
-        $login = trim((string) ($_POST['login'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
+        $loginValue = $_POST['login'] ?? '';
+        $passwordValue = $_POST['password'] ?? '';
+        if (!is_string($loginValue) || !is_string($passwordValue)) {
+            self::redirectWithError('Enter your username or email and password.', '');
+            return;
+        }
+
+        $login = trim($loginValue);
+        $password = $passwordValue;
         if ($login === '' || $password === '') {
             self::redirectWithError('Enter your username or email and password.', $login);
             return;

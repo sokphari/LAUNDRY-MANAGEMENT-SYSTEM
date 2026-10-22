@@ -64,7 +64,13 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
       };
 
       cell(String(index + 1), 'px-5 py-4 text-zinc-500 dark:text-zinc-400');
-      cell(service.name || '', 'px-5 py-4 font-medium');
+      const nameCell = document.createElement('td');
+      nameCell.className = 'px-5 py-4';
+      const nameBadge = document.createElement('span');
+      nameBadge.className = 'inline-flex max-w-full rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-950 dark:text-violet-200';
+      nameBadge.textContent = service.name || '';
+      nameCell.append(nameBadge);
+      row.append(nameCell);
       cell(service.description || '—', 'max-w-sm truncate px-5 py-4 text-zinc-600 dark:text-zinc-300');
       cell(`${Number(service.price).toFixed(2)} KHR / ${service.billing_unit || 'piece'}`, 'whitespace-nowrap px-5 py-4 font-medium');
 
@@ -85,6 +91,26 @@ if (searchForm && serviceRows && resultCount && searchStatus) {
 
       if (serviceRows.dataset.canManage === '1') {
         actions.append(actionLink(`/services/${Number(service.id)}/edit`, window.appTranslate('Edit {name}', { name: service.name || window.appTranslate('service') }), '<path stroke-linecap="round" stroke-linejoin="round" d="m14 5 5 5M4 20l4.5-1 11-11a2.12 2.12 0 0 0-3-3l-11 11L4 20Z"/>'));
+        if (Number(service.usage_count) === 0) {
+          const deleteForm = document.createElement('form');
+          deleteForm.method = 'post';
+          deleteForm.action = `/services/${Number(service.id)}/delete-unused`;
+          deleteForm.dataset.confirm = window.appTranslate('Permanently delete {name}? This service has no order history.', { name: service.name || window.appTranslate('service') });
+          deleteForm.dataset.confirmTitle = window.appTranslate('Confirm service deletion');
+          deleteForm.dataset.confirmAcceptLabel = window.appTranslate('Delete');
+          const csrf = document.createElement('input');
+          csrf.type = 'hidden';
+          csrf.name = '_csrf_token';
+          csrf.value = serviceRows.dataset.csrfToken || '';
+          const deleteButton = document.createElement('button');
+          deleteButton.type = 'submit';
+          deleteButton.setAttribute('aria-label', window.appTranslate('Delete {name}', { name: service.name || window.appTranslate('service') }));
+          deleteButton.title = window.appTranslate('Delete service');
+          deleteButton.className = 'grid size-9 place-items-center rounded-lg border border-red-200 text-red-600 hover:border-red-400 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950';
+          deleteButton.append(makeIcon('<path stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6m4-6v6M5.5 7l1 13h11l1-13M9 7V4h6v3"/>'));
+          deleteForm.append(csrf, deleteButton);
+          actions.append(deleteForm);
+        }
         const form = document.createElement('form');
         form.method = 'post';
         form.action = `/services/${Number(service.id)}/status`;

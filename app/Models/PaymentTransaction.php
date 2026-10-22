@@ -126,8 +126,8 @@ final class PaymentTransaction
         if ($payment === false) return false;
 
         $items = $database->prepare(
-            'SELECT s.name AS service_name, oi.quantity, s.billing_unit, oi.line_total
-             FROM order_items oi INNER JOIN services s ON s.id = oi.service_id
+            'SELECT oi.service_name, oi.quantity, oi.billing_unit, oi.line_total
+             FROM order_items oi
              WHERE oi.order_id = :order_id ORDER BY oi.id'
         );
         $items->execute(['order_id' => $payment['order_id']]);

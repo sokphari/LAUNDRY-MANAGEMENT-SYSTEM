@@ -126,7 +126,7 @@ final class ReportController
              FROM orders o
              LEFT JOIN (SELECT p.order_id, SUM(p.amount) amount FROM order_payments p WHERE p.voided_at IS NULL GROUP BY p.order_id) paid ON paid.order_id=o.id
              LEFT JOIN (SELECT p.order_id, SUM(r.amount) amount FROM order_payment_refunds r INNER JOIN order_payments p ON p.id=r.payment_id AND p.voided_at IS NULL GROUP BY p.order_id) refunded ON refunded.order_id=o.id
-             WHERE $orderWhere"
+             WHERE $orderWhere AND o.status <> 'cancelled'"
         );
         $balanceStmt->execute($orderParams); $outstanding = (float)$balanceStmt->fetchColumn();
         $snapshotSql =

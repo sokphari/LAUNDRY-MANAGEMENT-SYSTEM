@@ -13,14 +13,16 @@ final class Service
     {
         $conditions = [];
         $parameters = [];
-        if ($status === 'active') $conditions[] = 'is_active = 1';
-        elseif ($status === 'inactive') $conditions[] = 'is_active = 0';
+        if ($status === 'active') $conditions[] = 's.is_active = 1';
+        elseif ($status === 'inactive') $conditions[] = 's.is_active = 0';
         if ($query !== '') {
-            $conditions[] = 'name LIKE :name_query';
+            $conditions[] = 's.name LIKE :name_query';
             $parameters['name_query'] = '%' . $query . '%';
         }
         $where = $conditions === [] ? '' : ' WHERE ' . implode(' AND ', $conditions);
-        $statement = $database->prepare('SELECT id, name, description, price, billing_unit, is_active, created_at FROM services' . $where . ' ORDER BY is_active DESC, name, id DESC LIMIT 200');
+        $statement = $database->prepare('SELECT s.id, s.name, s.description, s.price, s.billing_unit, s.is_active, s.created_at,
+                (SELECT COUNT(*) FROM order_items oi WHERE oi.service_id = s.id) AS usage_count
+            FROM services s' . $where . ' ORDER BY s.is_active DESC, s.name, s.id DESC LIMIT 200');
         $statement->execute($parameters);
         return $statement->fetchAll();
     }
@@ -69,6 +71,13 @@ final class Service
         $value = $active ? 1 : 0;
         $statement->execute(['new_active' => $value, 'id' => $id, 'old_active' => $value]);
         return $statement->rowCount() > 0;
+    }
+
+    public static function deleteIfUnused(PDO $database, int $id): bool
+    {
+        $statement = $database->prepare('DELETE FROM services WHERE id = :id AND NOT EXISTS (SELECT 1 FROM order_items WHERE service_id = :service_id)');
+        $statement->execute(['id' => $id, 'service_id' => $id]);
+        return $statement->rowCount() === 1;
     }
 
     public static function nameAndUnitExists(PDO $database, string $name, string $unit, ?int $exceptId = null): bool
