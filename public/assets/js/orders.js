@@ -291,12 +291,19 @@ const showOrderActionNotice = (text, type = 'success') => {
   clearTimeout(orderActionNoticeTimer);
   orderActionNoticeTimer = setTimeout(() => orderActionNotice.classList.add('hidden'), 5000);
 };
-const orderStatusClasses = {
-  received: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300',
-  processing: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-300',
-  ready: 'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-300',
-  collected: 'border-zinc-200 bg-zinc-100 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300',
-  cancelled: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950 dark:text-red-300',
+const orderStatusIconPaths = {
+  received: '<path d="M12 3 4.5 7.5 12 12l7.5-4.5L12 3Z"/><path d="M4.5 7.5v9L12 21l7.5-4.5v-9L12 12v9"/>',
+  processing: '<circle cx="12" cy="12" r="8.5" stroke-dasharray="40 16"/>',
+  ready: '<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.3 2.3 4.8-4.8"/>',
+  collected: '<path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z"/><path d="m8.5 12.5 2.2 2.2 4.8-4.8"/>',
+  cancelled: '<circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6m0-6-6 6"/>',
+};
+const updateOrderStatusControl = (select, status) => {
+  const control = select.closest('[data-order-status-control]');
+  if (!control) return;
+  control.dataset.status = status;
+  const icon = control.querySelector('[data-order-status-icon]');
+  if (icon) icon.innerHTML = orderStatusIconPaths[status] || orderStatusIconPaths.received;
 };
 const orderNextStatuses = {
   received: ['processing', 'cancelled'],
@@ -305,8 +312,6 @@ const orderNextStatuses = {
   collected: [],
   cancelled: [],
 };
-const orderStatusBaseClasses = 'rounded-lg border px-2 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-primary/30';
-
 if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagination) {
   const t = appT;
   const queryInput = orderSearchForm.querySelector('[name="q"]');
@@ -383,18 +388,40 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       label.className = 'sr-only';
       label.htmlFor = `status-${Number(order.id)}`;
       label.textContent = t('Status for {order}', { order: order.order_code });
+      const statusControl = document.createElement('span');
+      statusControl.className = 'order-status-control';
+      statusControl.dataset.orderStatusControl = '';
+      statusControl.dataset.status = order.status;
+      const statusIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      statusIcon.classList.add('order-status-icon');
+      statusIcon.setAttribute('viewBox', '0 0 24 24');
+      statusIcon.setAttribute('fill', 'none');
+      statusIcon.setAttribute('stroke', 'currentColor');
+      statusIcon.setAttribute('stroke-width', '1.8');
+      statusIcon.setAttribute('stroke-linecap', 'round');
+      statusIcon.setAttribute('stroke-linejoin', 'round');
+      statusIcon.setAttribute('aria-hidden', 'true');
+      statusIcon.dataset.orderStatusIcon = '';
+      statusIcon.innerHTML = orderStatusIconPaths[order.status] || orderStatusIconPaths.received;
       const select = document.createElement('select');
       select.id = `status-${Number(order.id)}`;
       select.name = 'status';
       select.dataset.orderStatus = '';
       select.dataset.currentStatus = order.status;
-      select.className = `${orderStatusBaseClasses} ${orderStatusClasses[order.status] || orderStatusClasses.received}`;
+      select.className = 'order-status-select';
       [order.status, ...(orderNextStatuses[order.status] || [])].forEach((status) => {
         const option = new Option(t(status[0].toUpperCase() + status.slice(1)), status, false, order.status === status);
         select.append(option);
       });
       select.disabled = ['collected', 'cancelled'].includes(order.status);
-      form.append(csrf, returnTo, label, select);
+      const statusChevron = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      statusChevron.classList.add('order-status-chevron');
+      statusChevron.setAttribute('viewBox', '0 0 20 20');
+      statusChevron.setAttribute('fill', 'currentColor');
+      statusChevron.setAttribute('aria-hidden', 'true');
+      statusChevron.innerHTML = '<path fill-rule="evenodd" d="M5.22 7.22a.75.75 0 0 1 1.06 0L10 10.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 8.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/>';
+      statusControl.append(statusIcon, select, statusChevron);
+      form.append(csrf, returnTo, label, statusControl);
       statusCell.append(form);
       row.append(statusCell);
 
@@ -540,7 +567,7 @@ document.addEventListener('change', async (event) => {
     select.dataset.currentStatus = result.status;
     select.replaceChildren(...[result.status, ...result.allowed_statuses].map((status) => new Option(status[0].toUpperCase() + status.slice(1), status, false, status === result.status)));
     select.value = result.status;
-    select.className = `${orderStatusBaseClasses} ${orderStatusClasses[result.status] || orderStatusClasses.received}`;
+      updateOrderStatusControl(select, result.status);
     select.disabled = result.allowed_statuses.length === 0;
     if (message) message.textContent = appT('Order status changed to {status}.', { status: appT(result.status_label) });
     if (result.status === 'cancelled') {

@@ -5,6 +5,63 @@
 @source "../../app";
 @source "../../public/assets/js";
 
+.order-status-control {
+  position: relative;
+  display: inline-flex;
+  min-width: 8.5rem;
+  vertical-align: middle;
+}
+
+.order-status-select {
+  width: 100%;
+  min-height: 2.5rem;
+  appearance: none;
+  border: 1px solid;
+  border-radius: 0.75rem;
+  padding: 0.55rem 2rem 0.55rem 2.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  color: inherit;
+  cursor: pointer;
+}
+
+.order-status-select:focus-visible {
+  outline: 2px solid #7c3aed;
+  outline-offset: 2px;
+}
+
+.order-status-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.82;
+}
+
+.order-status-icon,
+.order-status-chevron {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.order-status-icon { left: 0.7rem; }
+.order-status-chevron { right: 0.55rem; opacity: 0.75; }
+
+.order-status-control[data-status="received"] .order-status-select { border-color: #bfdbfe; background: #eff6ff; color: #1d4ed8; }
+.order-status-control[data-status="processing"] .order-status-select { border-color: #fde68a; background: #fffbeb; color: #b45309; }
+.order-status-control[data-status="ready"] .order-status-select { border-color: #bbf7d0; background: #f0fdf4; color: #15803d; }
+.order-status-control[data-status="collected"] .order-status-select { border-color: #ddd6fe; background: #f5f3ff; color: #6d28d9; }
+.order-status-control[data-status="cancelled"] .order-status-select { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+
+.dark .order-status-control[data-status="received"] .order-status-select { border-color: #365b7b; background: #19324d; color: #93c5fd; }
+.dark .order-status-control[data-status="processing"] .order-status-select { border-color: #78601f; background: #3d2c12; color: #fcd34d; }
+.dark .order-status-control[data-status="ready"] .order-status-select { border-color: #286748; background: #143b2b; color: #86efac; }
+.dark .order-status-control[data-status="collected"] .order-status-select { border-color: #665080; background: #35254c; color: #ddd6fe; }
+.dark .order-status-control[data-status="cancelled"] .order-status-select { border-color: #7f3b45; background: #4b2028; color: #fda4af; }
+
 .user-gender-female {
   background-color: #fce7f3;
   color: #9d174d;
@@ -57,6 +114,10 @@
     justify-content: center;
     padding-left: 0.875rem;
     padding-right: 0.875rem;
+  }
+
+  body.sidebar-collapsed .app-sidebar .sidebar-account {
+    padding: 0.5rem;
   }
 }
 

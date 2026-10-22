@@ -27,9 +27,21 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
             <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-lg text-white" aria-hidden="true">L</span>
             <span class="module-label"><?= e(t('Laundry Manager')) ?></span>
         </a>
-        <div class="sidebar-content min-h-0 flex-1 overflow-y-auto px-4 pt-6">
-            <p class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-widest text-zinc-400"><?= e(t('Workspace')) ?></p>
+        <div class="sidebar-content min-h-0 flex-1 overflow-y-auto px-4 pt-5">
             <?php require dirname(__DIR__) . '/components/module-nav.php'; ?>
+        </div>
+        <?php
+        $profileActive = $currentPath === '/profile' || str_starts_with($currentPath, '/profile/');
+        $profileLinkClasses = 'module-link flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ' . ($profileActive
+            ? 'bg-violet-100 text-violet-800 dark:bg-violet-950/70 dark:text-violet-200'
+            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white');
+        ?>
+        <div class="sidebar-account shrink-0 border-t border-zinc-200 p-4 dark:border-zinc-800">
+            <p class="sidebar-section-title mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400 dark:text-zinc-500"><?= e(t('Account')) ?></p>
+            <a href="/profile" <?= $profileActive ? 'aria-current="page"' : '' ?> title="<?= e(t('My Profile')) ?>" class="<?= $profileLinkClasses ?>">
+                <svg class="module-icon size-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-3.8 3.1-5.8 7-5.8s6.5 2 7 5.8"/></svg>
+                <span class="module-label truncate"><?= e(t('My Profile')) ?></span>
+            </a>
         </div>
     </aside>
 

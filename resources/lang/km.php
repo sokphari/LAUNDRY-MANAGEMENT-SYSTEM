@@ -6,6 +6,8 @@ return [
     'Laundry Management System' => 'ប្រព័ន្ធគ្រប់គ្រងហាងបោកគក់',
     'Laundry Manager' => 'កម្មវិធីគ្រប់គ្រងហាងបោកគក់',
     'Workspace' => 'កន្លែងធ្វើការ',
+    'Management' => 'ការគ្រប់គ្រង',
+    'Reports & System' => 'របាយការណ៍ និងប្រព័ន្ធ',
     'Dashboard' => 'ផ្ទាំងគ្រប់គ្រង',
     'Customers unavailable' => 'មិនអាចបង្ហាញទិន្នន័យអតិថិជនបានទេ',
     'Customers' => 'អតិថិជន',

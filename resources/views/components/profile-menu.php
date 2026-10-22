@@ -7,8 +7,8 @@ $profileImageUrl = filter_var($profileImage, FILTER_VALIDATE_URL) !== false && i
 $profileImageLocal = preg_match('~\\A/uploads/profiles/[a-f0-9]{32}\\.(?:jpg|png|webp|gif)\\z~', $profileImage) === 1;
 ?>
 <details class="profile-menu relative">
-    <summary class="flex h-10 cursor-pointer list-none items-center gap-2 rounded-xl border border-zinc-200 bg-white py-1 pl-1 pr-2 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900 sm:gap-3 sm:pr-3">
-        <?php if ($profileImageUrl || $profileImageLocal): ?><img src="<?= e($profileImage) ?>" alt="" class="size-8 shrink-0 rounded-full border border-zinc-200 object-cover dark:border-zinc-700"><?php else: ?><span class="grid size-8 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white" aria-hidden="true"><?= e($profileInitial) ?></span><?php endif; ?>
+    <summary class="flex h-14 cursor-pointer list-none items-center gap-5 rounded-xl border border-zinc-200 bg-white py-1 pl-1.5 pr-3 hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary dark:border-zinc-700 dark:bg-zinc-900">
+        <?php if ($profileImageUrl || $profileImageLocal): ?><img src="<?= e($profileImage) ?>" alt="" class="size-9 shrink-0 rounded-full border border-zinc-200 object-cover dark:border-zinc-700"><?php else: ?><span class="grid size-9 shrink-0 place-items-center rounded-full bg-blue-600 text-xs font-bold text-white" aria-hidden="true"><?= e($profileInitial) ?></span><?php endif; ?>
         <span class="hidden min-w-0 text-left sm:block">
             <span class="block max-w-28 truncate text-sm font-semibold leading-4"><?= e($profileName) ?></span>
             <span class="mt-0.5 block text-xs capitalize leading-3 text-zinc-500 dark:text-zinc-400"><?= e(t(ucfirst((string) ($user['role'] ?? '')))) ?></span>
