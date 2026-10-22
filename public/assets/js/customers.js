@@ -6,8 +6,18 @@ const initializeCustomersPage = () => {
   const status = document.getElementById('customer-search-status');
   const resultCount = document.getElementById('customer-result-count');
   const pagination = document.getElementById('customer-pagination');
+  const table = rows?.closest('table');
 
   if (!form || !input || !rows || !status) return;
+
+  const updateMobileLabels = () => {
+    if (!table) return;
+    const labels = [...table.tHead.rows[0].cells].map((cell) => cell.textContent.trim());
+    rows.querySelectorAll('tr').forEach((row) => [...row.cells].forEach((cell, index) => {
+      if (!cell.hasAttribute('colspan')) cell.dataset.label = labels[index] || '';
+    }));
+  };
+  updateMobileLabels();
 
   let translations = {};
   try {
@@ -83,6 +93,7 @@ const initializeCustomersPage = () => {
 
   const showEmptyRow = (message) => {
     const row = document.createElement('tr');
+    row.dataset.emptyState = '';
     const cell = document.createElement('td');
     cell.colSpan = 6;
     cell.className = 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400';
@@ -194,6 +205,7 @@ const initializeCustomersPage = () => {
       const last = Math.min(page * 10, total);
       resultCount.textContent = translate(total === 1 ? 'resultCountOne' : 'resultCountMany', { first, last, total, matching: query ? (translations.matching || ' matching your search') : '' });
     }
+    updateMobileLabels();
     renderPagination(page, totalPages);
     status.textContent = translate('found', { total, page, pages: totalPages });
   };

@@ -283,11 +283,21 @@ document.querySelectorAll('[data-order-form]').forEach((form) => {
 
 const orderSearchForm = document.querySelector('#order-search-form');
 const orderRows = document.querySelector('#order-rows');
+const orderTable = document.querySelector('#orders-table');
 const orderCount = document.querySelector('#order-result-count');
 const orderPagination = document.querySelector('#order-pagination');
 const orderSearchStatus = document.querySelector('#order-search-status');
 const orderActionNotice = document.querySelector('#order-action-notice');
 let orderActionNoticeTimer;
+
+const updateOrderMobileLabels = () => {
+  if (!orderTable || !orderRows) return;
+  const labels = [...orderTable.tHead.rows[0].cells].map((cell) => cell.textContent.trim());
+  orderRows.querySelectorAll('tr').forEach((row) => [...row.cells].forEach((cell, index) => {
+    if (!cell.hasAttribute('colspan')) cell.dataset.label = labels[index] || '';
+  }));
+};
+updateOrderMobileLabels();
 
 const showOrderActionNotice = (text, type = 'success') => {
   if (!orderActionNotice) return;
@@ -482,6 +492,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
     });
     if (orders.length === 0) {
       const row = document.createElement('tr');
+      row.dataset.emptyState = '';
       const cell = document.createElement('td');
       cell.colSpan = 10;
       cell.className = 'px-5 py-12 text-center text-zinc-500 dark:text-zinc-400';
@@ -489,6 +500,7 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
       row.append(cell);
       orderRows.append(row);
     }
+    updateOrderMobileLabels();
     const first = total === 0 ? 0 : ((page - 1) * 10 + 1);
     const last = Math.min(page * 10, total);
     orderCount.textContent = t('Showing {first}–{last} of {total} orders.', { first, last, total });

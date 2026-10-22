@@ -145,6 +145,15 @@ const makeTableCell = (row, value, className = 'px-5 py-3') => {
   return cell;
 };
 
+const updateDashboardMobileLabels = (body) => {
+  const table = body?.closest('table');
+  if (!table?.tHead) return;
+  const labels = [...table.tHead.rows[0].cells].map((cell) => cell.textContent.trim());
+  body.querySelectorAll('tr').forEach((row) => [...row.cells].forEach((cell, index) => {
+    if (!cell.hasAttribute('colspan')) cell.dataset.label = labels[index] || '';
+  }));
+};
+
 const emptyTableBody = (body, message, colspan) => {
   const row = document.createElement('tr');
   row.dataset.emptyState = '';
@@ -207,6 +216,7 @@ const renderRoleSections = (data) => {
         makeTableCell(row, `${Math.round(Number(payment.amount) || 0).toLocaleString('en-US')} KHR`, 'px-5 py-3 text-right font-semibold');
         paymentBody.append(row);
       });
+      updateDashboardMobileLabels(paymentBody);
     }
 
     const workBody = document.querySelector('#dashboard-personal-work');
@@ -228,6 +238,7 @@ const renderRoleSections = (data) => {
         makeTableCell(row, Number.isNaN(pickup.getTime()) ? '' : new Intl.DateTimeFormat('en-GB', { dateStyle: 'medium' }).format(pickup));
         workBody.append(row);
       });
+      updateDashboardMobileLabels(workBody);
     }
   }
 
@@ -268,6 +279,7 @@ const renderRoleSections = (data) => {
       row.append(linkCell);
       staffBody.append(row);
     });
+    updateDashboardMobileLabels(staffBody);
   }
 };
 
@@ -364,5 +376,6 @@ dashboardClockTimer = window.setInterval(updateDashboardClock, 1000);
   document.addEventListener('visibilitychange', dashboardVisibilityHandler);
 
 updateDashboardCustomRange();
+document.querySelectorAll('#dashboard-personal-payments, #dashboard-personal-work, #dashboard-staff-activity').forEach(updateDashboardMobileLabels);
 };
 document.addEventListener('app:page-ready', initializeDashboardPage);

@@ -255,7 +255,7 @@ return [
     'No orders found. Create your first order to get started.' => 'រកមិនឃើញការបញ្ជាទិញទេ។ សូមបង្កើតការបញ្ជាទិញដំបូង។',
     'Order' => 'ការបញ្ជាទិញ',
     'Order ' => 'ការបញ្ជាទិញ ',
-    'Swipe the table horizontally to view all order details.' => 'អូសតារាងផ្ដេកដើម្បីមើលព័ត៌មានការបញ្ជាទិញទាំងអស់។',
+    'Order details are shown as cards on small screens.' => 'ព័ត៌មានការបញ្ជាទិញត្រូវបានបង្ហាញជាកាតនៅលើអេក្រង់តូច។',
     'Payment method' => 'វិធីសាស្ត្រទូទាត់',
     'Cash' => 'សាច់ប្រាក់',
     'Customer information' => 'ព័ត៌មានអតិថិជន',

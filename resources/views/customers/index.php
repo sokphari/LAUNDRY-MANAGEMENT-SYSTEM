@@ -2,7 +2,7 @@
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <p class="text-sm font-semibold uppercase tracking-widest text-primary"><?= e(t('Customer management')) ?></p>
-            <h1 class="mt-2 text-3xl font-bold"><?= e(t('Customers')) ?></h1>
+            <h1 class="mt-2 text-2xl font-bold sm:text-3xl"><?= e(t('Customers')) ?></h1>
             <p class="mt-2 text-zinc-600 dark:text-zinc-300"><?= e(t('Search and update your customer contact details.')) ?></p>
         </div>
         <a href="/customers/create" class="inline-flex items-center rounded-lg bg-primary px-4 py-2.5 font-semibold text-white hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
@@ -25,7 +25,7 @@
 
     <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
         <div class="overflow-x-auto">
-            <table class="w-full min-w-[860px] text-left text-sm">
+            <table id="customers-table" data-responsive-cards class="w-full min-w-[860px] text-left text-sm">
                 <thead class="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
                     <tr><th scope="col" class="px-5 py-3"><?= e(t('ID')) ?></th><th scope="col" class="px-5 py-3"><?= e(t('Name')) ?></th><th scope="col" class="px-5 py-3"><?= e(t('Phone')) ?></th><th scope="col" class="px-5 py-3"><?= e(t('Address')) ?></th><th scope="col" class="px-5 py-3"><?= e(t('Created at')) ?></th><th scope="col" class="px-5 py-3 text-right"><?= e(t('Action')) ?></th></tr>
                 </thead>
@@ -70,7 +70,7 @@
                         </tr>
                     <?php endforeach; ?>
                     <?php if ($customers === []): ?>
-                        <tr><td colspan="6" class="px-5 py-12 text-center text-zinc-500 dark:text-zinc-400"><?= e(t($query !== '' ? 'No customers matched your search.' : 'No customers yet. Add your first customer to get started.')) ?></td></tr>
+                        <tr data-empty-state><td colspan="6" class="px-5 py-12 text-center text-zinc-500 dark:text-zinc-400"><?= e(t($query !== '' ? 'No customers matched your search.' : 'No customers yet. Add your first customer to get started.')) ?></td></tr>
                     <?php endif; ?>
                 </tbody>
             </table>

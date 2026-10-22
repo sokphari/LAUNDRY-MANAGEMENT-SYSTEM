@@ -43,14 +43,14 @@ $linePath = implode(' ', array_map(
 $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . number_format($zeroY, 1, '.', '') . ' L ' . str_replace(',', ' ', $linePath)
     . ' L ' . number_format($chartPoints[array_key_last($chartPoints)]['x'], 1, '.', '') . ' ' . number_format($zeroY, 1, '.', '') . ' Z';
 ?>
-<section class="space-y-5">
+<section class="min-w-0 space-y-5">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <p class="text-sm font-semibold uppercase tracking-widest text-primary"><?= e(t('Overview')) ?></p>
             <?php if ($isStaffDashboard): ?>
-                <h2 class="mt-2 text-3xl font-bold tracking-tight"><?= e(t('My Work Overview')) ?> · <span id="dashboard-staff-period"><?= e(t($rangeLabel)) ?></span></h2>
+                <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl"><?= e(t('My Work Overview')) ?> · <span id="dashboard-staff-period"><?= e(t($rangeLabel)) ?></span></h2>
             <?php else: ?>
-                <h2 class="mt-2 text-3xl font-bold tracking-tight"><?= e(t('Welcome, {name}', ['name' => $user['full_name'] ?? ''])) ?></h2>
+                <h2 class="mt-2 text-2xl font-bold tracking-tight sm:text-3xl"><?= e(t('Welcome, {name}', ['name' => $user['full_name'] ?? ''])) ?></h2>
             <?php endif; ?>
             <p class="mt-2 text-zinc-600 dark:text-zinc-300"><?= $isStaffDashboard ? e(t('Your dashboard shows your own work and activity. Use Orders and Payments to help with any shop order.')) : e(t('Store overview and staff activity for the selected date range.')) ?></p>
         </div>
@@ -77,7 +77,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
                     <option value="custom" <?= $selectedRange === 'custom' ? 'selected' : '' ?>>Custom range</option>
                     <option value="all" <?= $selectedRange === 'all' ? 'selected' : '' ?>>All time</option>
                 </select>
-                <div data-dashboard-custom-range class="mt-3 grid grid-cols-2 gap-2 <?= $selectedRange === 'custom' ? '' : 'hidden' ?>">
+                <div data-dashboard-custom-range class="mt-3 grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 <?= $selectedRange === 'custom' ? '' : 'hidden' ?>">
                     <div>
                         <label for="dashboard-from" class="mb-2 block text-sm font-medium">From</label>
                         <input id="dashboard-from" name="from" type="date" value="<?= e($fromDate) ?>" required class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -133,8 +133,8 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
     </div>
 
     <?php if (!$isStaffDashboard): ?>
-    <div class="grid items-stretch gap-5 xl:grid-cols-5">
-        <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-3 dark:bg-dark-card dark:ring-zinc-800">
+    <div class="grid min-w-0 grid-cols-1 items-stretch gap-5 xl:grid-cols-5">
+        <article class="min-w-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-3 dark:bg-dark-card dark:ring-zinc-800">
             <div class="flex flex-wrap items-start justify-between gap-2">
                 <div>
                     <h3 class="text-lg font-semibold"><?= $isStaffDashboard ? e(t('My net payments by month in')) : e(t('Net payments by month in')) ?> <?= e($selectedYear) ?></h3>
@@ -143,8 +143,8 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
             </div>
             <div class="mt-3">
                 <p class="mb-1 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden">Swipe chart horizontally to view all months.</p>
-                <div class="overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" role="region" aria-label="Monthly revenue line chart" tabindex="0">
-                <svg id="dashboard-revenue-chart" class="h-[250px] min-w-[520px] w-full" viewBox="0 0 640 270" preserveAspectRatio="none" role="img" aria-label="Line chart showing monthly net payments for <?= e($selectedYear) ?>">
+                <div class="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" role="region" aria-label="Monthly revenue line chart" tabindex="0">
+                <svg id="dashboard-revenue-chart" class="h-[250px] w-[640px] max-w-none" viewBox="0 0 640 270" preserveAspectRatio="none" role="img" aria-label="Line chart showing monthly net payments for <?= e($selectedYear) ?>">
                     <defs>
                         <linearGradient id="revenue-fill" x1="0" x2="0" y1="0" y2="1">
                             <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.22" />
@@ -171,12 +171,14 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
             </div>
         </article>
 
-        <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-2 dark:bg-dark-card dark:ring-zinc-800">
+        <article class="min-w-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 xl:col-span-2 dark:bg-dark-card dark:ring-zinc-800">
             <div>
                 <h3 class="text-lg font-semibold">Order status</h3>
                 <p id="dashboard-status-range" class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= $isStaffDashboard ? e(t('My orders received')) : e(t('Orders received')) ?>: <?= e($rangeLabel) ?></p>
             </div>
-            <div class="mt-4 flex flex-row items-center justify-center gap-3 sm:justify-start sm:gap-4">
+            <p class="mb-1 mt-3 text-xs text-zinc-500 dark:text-zinc-400 sm:hidden">Swipe chart horizontally to view chart and legend.</p>
+            <div class="w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary" role="region" aria-label="Order status chart and legend" tabindex="0">
+            <div class="mt-2 flex min-w-[360px] flex-row items-center justify-center gap-4 sm:justify-start">
                 <div class="relative size-32 shrink-0 sm:size-40">
                 <svg id="dashboard-status-chart" class="size-full -rotate-90" viewBox="0 0 140 140" role="img" aria-label="Pie chart showing orders by status">
                         <circle cx="70" cy="70" r="36" fill="none" stroke="currentColor" class="text-zinc-100 dark:text-zinc-800" stroke-width="14" />
@@ -193,7 +195,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
                         <span class="text-xs text-zinc-500 dark:text-zinc-400">orders</span>
                     </div>
                 </div>
-                <ul id="dashboard-status-legend" class="min-w-0 flex-1 space-y-2 sm:max-w-44">
+                <ul id="dashboard-status-legend" class="w-44 shrink-0 space-y-2">
                     <?php foreach ($orderStatuses as $status): ?>
                         <li class="flex items-center justify-between gap-3 text-sm">
                             <span class="flex items-center gap-2 text-zinc-600 dark:text-zinc-300"><svg class="size-2.5" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5" fill="<?= e($status['color']) ?>" /></svg><?= e($status['label']) ?></span>
@@ -201,6 +203,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
                         </li>
                     <?php endforeach; ?>
                 </ul>
+            </div>
             </div>
         </article>
     </div>
@@ -217,7 +220,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
             </article>
             <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
                 <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('My payments')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Payments you recorded in the selected period.')) ?></p></div>
-                <div class="overflow-x-auto"><table class="w-full min-w-[520px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Method')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Amount')) ?></th></tr></thead><tbody id="dashboard-personal-payments" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                <div class="overflow-x-auto"><table data-responsive-cards class="w-full min-w-[520px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Method')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Amount')) ?></th></tr></thead><tbody id="dashboard-personal-payments" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                     <?php foreach ($personalPayments as $payment): ?><tr><td class="px-5 py-3"><a class="font-semibold text-primary hover:underline" href="/orders/<?= (int) $payment['order_id'] ?>"><?= e($payment['order_code']) ?></a></td><td class="px-5 py-3"><?= e($payment['customer_name']) ?></td><td class="px-5 py-3"><?= e(strtoupper((string) $payment['method'])) ?></td><td class="px-5 py-3 text-right font-semibold"><?= e(format_khr((float) $payment['amount'])) ?> KHR</td></tr><?php endforeach; ?>
                     <?php if ($personalPayments === []): ?><tr data-empty-state><td colspan="4" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No payments recorded in this date range.')) ?></td></tr><?php endif; ?>
                 </tbody></table></div>
@@ -225,7 +228,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
         </div>
         <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
             <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('My open orders')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Open orders you created. You can still work on any order from the Orders module.')) ?></p></div>
-            <div class="overflow-x-auto"><table class="w-full min-w-[640px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Status')) ?></th><th class="px-5 py-3"><?= e(t('Pickup date')) ?></th></tr></thead><tbody id="dashboard-personal-work" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div class="overflow-x-auto"><table data-responsive-cards class="w-full min-w-[640px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Order')) ?></th><th class="px-5 py-3"><?= e(t('Customer')) ?></th><th class="px-5 py-3"><?= e(t('Status')) ?></th><th class="px-5 py-3"><?= e(t('Pickup date')) ?></th></tr></thead><tbody id="dashboard-personal-work" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 <?php foreach ($personalWork as $workOrder): ?><tr><td class="px-5 py-3"><a class="font-semibold text-primary hover:underline" href="/orders/<?= (int) $workOrder['id'] ?>"><?= e($workOrder['order_code']) ?></a></td><td class="px-5 py-3"><?= e($workOrder['customer_name']) ?></td><td class="px-5 py-3"><?= e(t(ucfirst((string) $workOrder['status']))) ?></td><td class="px-5 py-3"><?= e(date('d M Y', strtotime((string) $workOrder['expected_pickup_at']))) ?></td></tr><?php endforeach; ?>
                 <?php if ($personalWork === []): ?><tr data-empty-state><td colspan="4" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No open orders created by you.')) ?></td></tr><?php endif; ?>
             </tbody></table></div>
@@ -233,7 +236,7 @@ $areaPath = 'M ' . number_format($chartPoints[0]['x'], 1, '.', '') . ' ' . numbe
     <?php else: ?>
         <article class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
             <div class="border-b border-zinc-100 px-5 py-4 dark:border-zinc-800"><h3 class="font-semibold"><?= e(t('Staff activity')) ?></h3><p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400"><?= e(t('Orders, payments, and latest recorded action by staff for the selected period.')) ?></p></div>
-            <div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Staff member')) ?></th><th class="px-5 py-3"><?= e(t('Orders created')) ?></th><th class="px-5 py-3"><?= e(t('Net payments recorded')) ?></th><th class="px-5 py-3"><?= e(t('Latest activity')) ?></th><th class="px-5 py-3"><?= e(t('Date & time')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Details')) ?></th></tr></thead><tbody id="dashboard-staff-activity" class="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <div class="overflow-x-auto"><table data-responsive-cards class="w-full min-w-[760px] text-left text-sm"><thead class="bg-zinc-50 text-xs uppercase text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400"><tr><th class="px-5 py-3"><?= e(t('Staff member')) ?></th><th class="px-5 py-3"><?= e(t('Orders created')) ?></th><th class="px-5 py-3"><?= e(t('Net payments recorded')) ?></th><th class="px-5 py-3"><?= e(t('Latest activity')) ?></th><th class="px-5 py-3"><?= e(t('Date & time')) ?></th><th class="px-5 py-3 text-right"><?= e(t('Details')) ?></th></tr></thead><tbody id="dashboard-staff-activity" class="divide-y divide-zinc-100 dark:divide-zinc-800">
                 <?php foreach ($staffActivities as $activity): ?><tr><td class="px-5 py-3"><span class="block font-semibold"><?= e($activity['full_name']) ?></span><span class="text-xs text-zinc-500">@<?= e($activity['username']) ?></span></td><td class="px-5 py-3"><?= e($activity['orders']) ?></td><td class="px-5 py-3 font-semibold"><?= e(format_khr((float) $activity['payments'])) ?> KHR</td><td class="max-w-md px-5 py-3"><span class="block truncate" title="<?= e($activity['last_activity']) ?>"><?= e($activity['last_activity']) ?></span></td><td class="whitespace-nowrap px-5 py-3 text-zinc-500"><?= e($activity['last_activity_at']) ?></td><td class="px-5 py-3 text-right"><a class="font-semibold text-primary hover:underline" href="/audit-logs?user=<?= (int) $activity['user_id'] ?>"><?= e(t('View activity')) ?></a></td></tr><?php endforeach; ?>
                 <?php if ($staffActivities === []): ?><tr data-empty-state><td colspan="6" class="px-5 py-8 text-center text-zinc-500"><?= e(t('No staff accounts found.')) ?></td></tr><?php endif; ?>
             </tbody></table></div>

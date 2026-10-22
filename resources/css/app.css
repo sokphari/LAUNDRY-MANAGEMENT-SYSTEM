@@ -42,6 +42,143 @@
 .login-brand-lockup .brand-mark-image { width: 3.75rem; height: 3.75rem; }
 .login-brand-lockup .brand-wordmark { font-size: 1.45rem; }
 
+@media (max-width: 1300px) {
+  [data-responsive-cards],
+  [data-report-responsive] {
+    display: block;
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  [data-responsive-cards] thead,
+  [data-report-responsive] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  [data-responsive-cards] tbody,
+  [data-report-responsive] tbody {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.65rem;
+  }
+
+  [data-responsive-cards] tbody > tr:not([data-empty-state]),
+  [data-report-responsive] tbody > tr:not([data-empty-state]) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
+    border: 1px solid #e4e4e7;
+    border-radius: 0.75rem;
+    background: #fff;
+  }
+
+  .dark [data-responsive-cards] tbody > tr:not([data-empty-state]),
+  .dark [data-report-responsive] tbody > tr:not([data-empty-state]) {
+    border-color: #3f3f46;
+    background: #1c1b25;
+  }
+
+  [data-responsive-cards] tbody > tr > td,
+  [data-responsive-cards] tbody > tr > th,
+  [data-report-responsive] tbody > tr > td,
+  [data-report-responsive] tbody > tr > th {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
+    border-bottom: 1px solid #f4f4f5;
+    padding: 0.65rem 0.75rem !important;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  .dark [data-responsive-cards] tbody > tr > td,
+  .dark [data-responsive-cards] tbody > tr > th,
+  .dark [data-report-responsive] tbody > tr > td,
+  .dark [data-report-responsive] tbody > tr > th {
+    border-color: #272630;
+  }
+
+  [data-responsive-cards] tbody > tr > [data-label]::before,
+  [data-report-responsive] tbody > tr > [data-label]::before {
+    flex: 0 0 40%;
+    color: #71717a;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    text-align: left;
+    content: attr(data-label);
+  }
+
+  .dark [data-responsive-cards] tbody > tr > [data-label]::before,
+  .dark [data-report-responsive] tbody > tr > [data-label]::before {
+    color: #a1a1aa;
+  }
+
+  [data-responsive-cards] tbody > tr[data-empty-state],
+  [data-report-responsive] tbody > tr[data-empty-state] {
+    display: block;
+    border: 0;
+    background: transparent;
+  }
+
+  [data-responsive-cards] tbody > tr[data-empty-state] > td,
+  [data-report-responsive] tbody > tr[data-empty-state] > td {
+    display: block;
+    border: 0;
+    text-align: center;
+  }
+
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(1),
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(1) {
+    display: none;
+  }
+
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(2),
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(4),
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(6),
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(2),
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(3),
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(10),
+  [data-report-responsive] tbody > tr:not([data-empty-state]) > :first-child,
+  #dashboard-personal-work tbody > tr:not([data-empty-state]) > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  #orders-table .order-status-control,
+  #orders-table .order-status-select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(10) > div {
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  #orders-table tbody > tr:not([data-empty-state]) > :nth-child(10)::before {
+    flex-basis: 20%;
+  }
+
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(6)::before {
+    flex-basis: 25%;
+  }
+
+  #customers-table tbody > tr:not([data-empty-state]) > :nth-child(6) > div {
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 .app-navigation-progress {
   position: fixed;
   inset: 0 0 auto;
