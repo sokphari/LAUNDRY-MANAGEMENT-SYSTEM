@@ -19,7 +19,11 @@
         <div class="space-y-4">
             <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 dark:bg-dark-card dark:ring-zinc-800">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div><h2 class="flex items-center gap-2 font-semibold"><span class="grid size-9 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 20a7 7 0 0 1 14 0"/></svg></span><?= e(t('Customer Information')) ?></h2><p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Select an existing customer or add a new one.')) ?></p></div>
+                    <div>
+                        <h2 class="flex items-center gap-2 font-semibold">
+                        <span class="grid size-9 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 20a7 7 0 0 1 14 0"/></svg></span>
+                        <!-- <?= e(t('Customer Information')) ?></h2><p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Select an existing customer or add a new one.')) ?></p> -->
+                    </div>
                     <a href="/customers/create" class="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover"><span aria-hidden="true">+</span><?= e(t('Add New Customer')) ?></a>
                 </div>
                 <?php $selectedCustomer = null; foreach ($customers as $customer) { if ((string) ($orderInput['customer_id'] ?? '') === (string) $customer['id']) { $selectedCustomer = $customer; break; } } ?>
@@ -44,7 +48,9 @@
             </article>
 
             <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 dark:bg-dark-card dark:ring-zinc-800">
-                <div><h2 class="flex items-center gap-2 font-semibold"><span class="grid size-9 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" d="M8 3v4m8-4v4M4 10h16"/></svg></span><?= e(t('Order Details')) ?></h2><p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Set the received date and expected pickup date.')) ?></p></div>
+                <div><h2 class="flex items-center gap-2 font-semibold"><span class="grid size-9 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path stroke-linecap="round" d="M8 3v4m8-4v4M4 10h16"/></svg></span><?= e(t('Order Details')) ?></h2>
+                <!-- <p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Set the received date and expected pickup date.')) ?></p> -->
+            </div>
                 <div class="mt-4 grid gap-3 sm:grid-cols-2">
                     <div><label for="received_at" class="mb-1.5 block text-xs font-medium text-zinc-500 dark:text-zinc-400"><?= e(t('Received')) ?></label><input id="received_at" name="received_at" type="date" required value="<?= e($orderInput['received_at'] ?? '') ?>" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"><?php if (isset($errors['received_at'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['received_at']) ?></p><?php endif; ?></div>
                     <div><label for="expected_pickup_at" class="mb-1.5 block text-xs font-medium text-zinc-500 dark:text-zinc-400"><?= e(t('Pickup')) ?></label><input id="expected_pickup_at" name="expected_pickup_at" type="date" required value="<?= e($orderInput['expected_pickup_at'] ?? '') ?>" class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"><?php if (isset($errors['expected_pickup_at'])): ?><p class="mt-1 text-sm text-red-600"><?= e($errors['expected_pickup_at']) ?></p><?php endif; ?></div>

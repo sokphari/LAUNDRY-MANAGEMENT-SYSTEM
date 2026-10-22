@@ -21,8 +21,8 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
     <button id="sidebar-backdrop" type="button" aria-label="Close navigation" class="fixed inset-0 z-30 hidden bg-black/50 md:hidden"></button>
     <aside id="app-sidebar" class="app-sidebar fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-zinc-200 bg-white transition-[width,transform] duration-200 md:translate-x-0 dark:border-zinc-800 dark:bg-dark-card">
         <a href="/dashboard" class="flex h-20 shrink-0 items-center gap-3 border-b border-zinc-100 px-6 font-bold tracking-tight dark:border-zinc-800">
-            <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-primary text-lg text-white" aria-hidden="true">L</span>
-            <span class="module-label"><?= e(t('Laundry Manager')) ?></span>
+            <img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="sidebar-brand-logo h-14 w-full min-w-0 rounded-lg bg-white p-1 object-contain object-left">
+            <span class="sidebar-brand-fallback hidden size-9 shrink-0 place-items-center rounded-xl bg-primary text-lg text-white" aria-hidden="true">L</span>
         </a>
         <div class="sidebar-content min-h-0 flex-1 overflow-y-auto px-4 pt-5">
             <?php require dirname(__DIR__) . '/components/module-nav.php'; ?>

@@ -1,7 +1,7 @@
 <main class="report">
     <header class="report-header">
         <div>
-            <p class="eyebrow">Laundry Manager</p>
+            <img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="export-brand-logo">
             <h1>Payments &amp; Refunds</h1>
             <p>Exported <?= e($exportedAt) ?></p>
         </div>

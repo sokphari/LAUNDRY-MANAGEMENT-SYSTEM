@@ -43,9 +43,15 @@ final class AuditLogController
         'user.password_reset' => 'Password Reset',
         'user.permissions_updated' => 'User Permissions Updated',
         'role.permissions_updated' => 'Role Permissions Updated',
+        'backup.created' => 'Backup Created',
+        'backup.restored' => 'Backup Restored',
+        'backup.settings_changed' => 'Backup Settings Updated',
+        'backup.downloaded' => 'Backup Downloaded',
+        'backup.failed' => 'Backup Failed',
+        'backup.cleanup' => 'Backup Cleanup',
     ];
 
-    private const MODULES = ['order' => 'Orders', 'payment' => 'Payments', 'service' => 'Services', 'customer' => 'Customers', 'refund' => 'Refunds', 'auth' => 'Authentication', 'user' => 'Users', 'role' => 'Roles'];
+    private const MODULES = ['order' => 'Orders', 'payment' => 'Payments', 'service' => 'Services', 'customer' => 'Customers', 'refund' => 'Refunds', 'auth' => 'Authentication', 'user' => 'Users', 'role' => 'Roles', 'backup' => 'Backup & Restore'];
 
     /** @param array<string, mixed> $databaseConfig */
     public static function index(array $databaseConfig): void
@@ -136,11 +142,11 @@ final class AuditLogController
 
     public static function actionClass(string $action): string
     {
-        if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created', 'service.activated'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        if (in_array($action, ['order.created', 'payment.recorded', 'service.created', 'customer.created', 'service.activated', 'backup.created'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if (in_array($action, ['auth.login', 'user.created', 'user.enabled'], true)) return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
         if ($action === 'order.status_changed') return 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
-        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated', 'user.updated', 'user.profile_updated', 'user.role_changed', 'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
-        if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated', 'auth.login_failed', 'user.disabled'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+        if (in_array($action, ['service.price_updated', 'payment.corrected', 'order.updated', 'service.updated', 'customer.updated', 'user.updated', 'user.profile_updated', 'user.role_changed', 'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated', 'backup.settings_changed'], true)) return 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        if (in_array($action, ['order.cancelled', 'refund.completed', 'service.deactivated', 'customer.deactivated', 'auth.login_failed', 'user.disabled', 'backup.restored', 'backup.failed'], true)) return 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
         return 'bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300';
     }
 }

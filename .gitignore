@@ -3,4 +3,5 @@
 /public/assets/css/app.css
 /storage/logs/*
 !/storage/logs/.gitkeep
+/storage/backups/
 .DS_Store

@@ -131,6 +131,14 @@ main[aria-busy="true"] { opacity: 0.72; }
     padding-right: 0;
   }
 
+  body.sidebar-collapsed .app-sidebar .sidebar-brand-logo {
+    display: none;
+  }
+
+  body.sidebar-collapsed .app-sidebar .sidebar-brand-fallback {
+    display: grid;
+  }
+
   body.sidebar-collapsed .app-sidebar .module-row {
     justify-content: center;
   }
@@ -229,6 +237,16 @@ main[aria-busy="true"] { opacity: 0.72; }
   .receipt-header h1 {
     margin: 0;
     font-size: 15pt;
+  }
+
+  .receipt-brand-logo {
+    display: block;
+    width: 44mm;
+    max-width: 100%;
+    height: auto;
+    max-height: 20mm;
+    margin: 0 auto 2mm;
+    object-fit: contain;
   }
 
   .receipt-header p,

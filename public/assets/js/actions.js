@@ -1,6 +1,8 @@
 (() => {
   const dialog = document.querySelector('#app-confirm-dialog');
   const message = dialog?.querySelector('[data-confirm-message]');
+  const title = dialog?.querySelector('[data-confirm-title]');
+  const acceptLabel = dialog?.querySelector('[data-confirm-accept-label]');
   const cancelButton = dialog?.querySelector('[data-confirm-cancel]');
   const acceptButton = dialog?.querySelector('[data-confirm-accept]');
   let pendingForm = null;
@@ -22,6 +24,8 @@
     event.preventDefault();
     pendingForm = form;
     message.textContent = form.dataset.confirm || '';
+    if (title) title.textContent = window.appTranslate(form.dataset.confirmTitle || 'Confirm customer deactivation');
+    if (acceptLabel) acceptLabel.textContent = window.appTranslate(form.dataset.confirmAcceptLabel || 'Deactivate');
     dialog.showModal();
     cancelButton?.focus();
   });

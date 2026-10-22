@@ -13,7 +13,7 @@ foreach ($report['statuses'] as $status) $statusMap[strtolower($status['label'])
 ?>
 <main class="business-report">
     <header class="business-report-header">
-        <div class="brand-lockup"><span class="brand-mark" aria-hidden="true">L</span><div><h1>Laundry<br>Manager</h1><p>Laundry &amp; Dry Cleaning Services</p></div></div>
+        <div class="brand-lockup"><img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="report-brand-logo"></div>
         <div class="report-meta"><p>Generated: <?= e($exportedAt) ?></p><p>Prepared by: <?= e($preparedBy) ?></p><p>Currency: KHR</p></div>
     </header>
     <div class="brand-rule"></div>

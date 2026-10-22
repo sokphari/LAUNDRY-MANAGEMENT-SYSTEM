@@ -37,6 +37,7 @@ $groups = $currentRole === 'admin'
                 ['label' => 'User accounts', 'path' => '/users', 'permission' => 'users.manage'],
                 ['label' => 'Roles & permissions', 'path' => '/roles', 'permission' => 'roles.manage'],
             ]],
+            ['label' => 'Backup & Restore', 'path' => '/backups', 'icon' => 'backup'],
         ],
         'Reports & System' => [
             ['label' => 'Reports', 'path' => '/reports', 'permission' => 'reports.view', 'icon' => 'reports'],
@@ -68,6 +69,7 @@ $iconMarkup = [
     'reports' => '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
     'users' => '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M18 14a5 5 0 0 1 3 4v2"/>',
     'profile' => '<circle cx="12" cy="8" r="3.5"/><path d="M5 20c.5-3.8 3.1-5.8 7-5.8s6.5 2 7 5.8"/>',
+    'backup' => '<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
 ];
 $renderLink = static function (array $item, bool $active, string $icon) use ($iconMarkup): void {
     $classes = 'module-link flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ' . ($active

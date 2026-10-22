@@ -12,6 +12,7 @@ final class SecurityNotification
         'auth.login', 'auth.login_failed', 'auth.logout',
         'user.created', 'user.updated', 'user.role_changed', 'user.enabled', 'user.disabled',
         'user.password_changed', 'user.password_reset', 'user.permissions_updated', 'role.permissions_updated',
+        'backup.failed',
     ];
 
     /** @return array{notifications: list<array<string, mixed>>, unread_count: int, failed_attempt_count: int} */
@@ -127,6 +128,12 @@ final class SecurityNotification
             'user.password_reset' => 'Password reset',
             'user.permissions_updated' => 'User permissions changed',
             'role.permissions_updated' => 'Role permissions changed',
+            'backup.created' => 'Backup created',
+            'backup.restored' => 'Backup restored',
+            'backup.settings_changed' => 'Backup settings changed',
+            'backup.downloaded' => 'Backup downloaded',
+            'backup.failed' => 'Scheduled backup failed',
+            'backup.cleanup' => 'Expired backups cleaned up',
             default => ucwords(str_replace(['.', '_'], ' ', $action)),
         };
     }

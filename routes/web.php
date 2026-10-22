@@ -13,10 +13,12 @@ use App\Controllers\PaymentController;
 use App\Controllers\ReportController;
 use App\Controllers\UserAdminController;
 use App\Controllers\ProfileController;
+use App\Controllers\BackupController;
 use App\Core\Auth;
 use App\Core\Csrf;
 use App\Middleware\RequireAuth;
 use App\Middleware\RequirePermission;
+use App\Middleware\RequireRole;
 
 $router->get('/', static function (): void {
     header('Location: ' . (Auth::check() ? '/dashboard' : '/login'), true, 302);
@@ -87,6 +89,22 @@ $router->get('/reports', static function () use ($databaseConfig): void {
 });
 $router->get('/reports/export', static function () use ($databaseConfig): void {
     if (RequireAuth::run($databaseConfig) && RequirePermission::run($databaseConfig, 'reports.view')) ReportController::export($databaseConfig);
+});
+
+$router->get('/backups', static function () use ($databaseConfig, $appConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequireRole::run(['admin'])) BackupController::index($databaseConfig, (string) ($appConfig['environment'] ?? 'production'));
+});
+$router->post('/backups/create', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequireRole::run(['admin'])) BackupController::create($databaseConfig);
+});
+$router->post('/backups/settings', static function () use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequireRole::run(['admin'])) BackupController::updateSettings($databaseConfig);
+});
+$router->get('/backups/{filename}/download', static function (string $filename) use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequireRole::run(['admin'])) BackupController::download($filename, $databaseConfig);
+});
+$router->post('/backups/{filename}/restore', static function (string $filename) use ($databaseConfig): void {
+    if (RequireAuth::run($databaseConfig) && RequireRole::run(['admin'])) BackupController::restore($filename, $databaseConfig);
 });
 
 $router->get('/users', static function () use ($databaseConfig): void {

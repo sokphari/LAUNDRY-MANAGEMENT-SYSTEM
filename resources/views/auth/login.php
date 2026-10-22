@@ -1,6 +1,6 @@
 <section class="w-full max-w-md rounded-2xl bg-white p-8 shadow-sm ring-1 ring-zinc-200 dark:bg-dark-card dark:ring-zinc-800">
-    <p class="text-sm font-semibold uppercase tracking-widest text-primary"><?= e(t('Laundry Management')) ?></p>
-    <h1 class="mt-3 text-2xl font-bold tracking-tight"><?= e(t('Sign in to your account')) ?></h1>
+    <img src="/assets/images/laundry-manager-logo.png" alt="Laundry Manager" class="mx-auto mb-6 h-24 w-60 rounded-lg bg-white p-2 object-contain">
+    <h1 class="text-2xl font-bold tracking-tight"><?= e(t('Sign in to your account')) ?></h1>
     <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-300"><?= e(t('Use your staff username or email.')) ?></p>
 
     <?php if (!empty($error)): ?>
