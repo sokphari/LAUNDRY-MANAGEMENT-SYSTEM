@@ -362,13 +362,16 @@ if (orderSearchForm && orderRows && orderCount && orderSearchStatus && orderPagi
 
       const customerCell = document.createElement('td');
       customerCell.className = 'px-5 py-4';
+      const customerDetails = document.createElement('div');
+      customerDetails.className = 'order-customer-details';
       const customerName = document.createElement('p');
-      customerName.className = 'font-medium';
+      customerName.className = 'order-customer-name font-medium';
       customerName.textContent = order.customer_name;
       const customerPhone = document.createElement('p');
-      customerPhone.className = 'text-xs text-zinc-500 dark:text-zinc-400';
+      customerPhone.className = 'order-customer-phone text-xs text-zinc-500 dark:text-zinc-400';
       customerPhone.textContent = order.customer_phone;
-      customerCell.append(customerName, customerPhone);
+      customerDetails.append(customerName, customerPhone);
+      customerCell.append(customerDetails);
       row.append(customerCell);
       appendCell(row, order.received_display, 'whitespace-nowrap px-5 py-4');
       appendCell(row, order.pickup_display, 'whitespace-nowrap px-5 py-4');

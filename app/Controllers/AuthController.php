@@ -19,6 +19,20 @@ final class AuthController
     public static function showLogin(array $databaseConfig): void
     {
         if (Auth::check()) {
+            if (($_GET['welcome'] ?? '') === '1' && ($_SESSION['_login_success_notice'] ?? false) === true) {
+                unset($_SESSION['_login_success_notice']);
+                header('Cache-Control: no-store, private');
+                header('Refresh: 2; url=/dashboard');
+                View::render('auth/login', [
+                    'title' => 'Sign in',
+                    'csrfToken' => Csrf::token(),
+                    'error' => null,
+                    'oldLogin' => '',
+                    'loginSuccess' => true,
+                    'user' => Auth::user(),
+                ], 'guest');
+                return;
+            }
             header('Location: /dashboard', true, 302);
             return;
         }
@@ -122,7 +136,8 @@ final class AuthController
             'auth_version' => (int)$user['auth_version'],
         ]);
         unset($_SESSION['_csrf_token']);
-        header('Location: /dashboard', true, 302);
+        $_SESSION['_login_success_notice'] = true;
+        header('Location: /login?welcome=1', true, 303);
     }
 
     /** @param array<string, mixed> $databaseConfig */

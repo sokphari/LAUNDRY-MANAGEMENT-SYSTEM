@@ -1,5 +1,5 @@
 <?php $isEdit = $isEdit ?? false; $paidAmount = $paidAmount ?? 0.0; ?>
-<section class="w-full space-y-5">
+<section class="w-full min-w-0 space-y-5">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <div>
             <a href="/orders" class="text-sm font-medium text-primary hover:underline">← <?= e(t('Back to orders')) ?></a>
@@ -14,15 +14,16 @@
     <?php if ($services === []): ?><div class="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100"><?= e(t('Add an active service before creating an order.')) ?> <a href="/services/create" class="font-semibold underline"><?= e(t('Create service')) ?></a></div><?php endif; ?>
 
     <?php if (isset($errors['form'])): ?><p role="alert" class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200"><?= e(t($errors['form'])) ?></p><?php endif; ?>
-    <form method="post" action="<?= $isEdit ? '/orders/' . (int) $orderId . '/edit' : '/orders/create' ?>" data-order-form class="grid items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.9fr)]">
+    <form method="post" action="<?= $isEdit ? '/orders/' . (int) $orderId . '/edit' : '/orders/create' ?>" data-order-form class="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(360px,0.9fr)]">
         <input type="hidden" name="_csrf_token" value="<?= e($csrfToken) ?>">
-        <div class="space-y-4">
-            <article class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 dark:bg-dark-card dark:ring-zinc-800">
+        <div class="min-w-0 space-y-4">
+            <article class="min-w-0 rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 dark:bg-dark-card dark:ring-zinc-800">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h2 class="flex items-center gap-2 font-semibold">
                         <span class="grid size-9 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 20a7 7 0 0 1 14 0"/></svg></span>
-                        <!-- <?= e(t('Customer Information')) ?></h2><p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Select an existing customer or add a new one.')) ?></p> -->
+                        <?= e(t('Customer Information')) ?></h2>
+                        <p class="ml-11 mt-0.5 text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Select an existing customer or add a new one.')) ?></p>
                     </div>
                     <a href="/customers/create" class="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white transition hover:bg-primary-hover"><span aria-hidden="true">+</span><?= e(t('Add New Customer')) ?></a>
                 </div>
@@ -93,7 +94,7 @@
             </article>
         </div>
 
-        <div class="space-y-4 xl:sticky xl:top-24">
+        <div class="min-w-0 space-y-4 xl:sticky xl:top-24">
             <aside class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-zinc-200 sm:p-5 dark:bg-dark-card dark:ring-zinc-800">
                 <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-3"><span class="grid size-10 place-items-center rounded-lg bg-violet-100 text-primary dark:bg-violet-950 dark:text-white"><svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path stroke-linecap="round" d="M8 8h8M8 12h8M8 16h4"/></svg></span><div><h2 class="font-semibold"><?= e(t('Order Summary')) ?></h2><p class="text-xs text-zinc-500 dark:text-zinc-400"><?= e(t('Review the order details.')) ?></p></div></div><span class="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-800 dark:bg-violet-950 dark:text-violet-200"><span data-order-item-count-value>0</span> <?= e(t('items')) ?></span></div>
                 <div data-order-summary-items class="mt-4 space-y-2"></div>

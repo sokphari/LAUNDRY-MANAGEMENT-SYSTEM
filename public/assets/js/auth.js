@@ -11,3 +11,7 @@ document.querySelectorAll('[data-password-toggle]').forEach((button) => {
     button.querySelector('[data-password-hide-icon]')?.classList.toggle('hidden', !showPassword);
   });
 });
+
+if (document.querySelector('[data-login-success]')) {
+  window.setTimeout(() => window.location.replace('/dashboard'), 1600);
+}
