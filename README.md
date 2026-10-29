@@ -1,6 +1,11 @@
 LAUNDRY MANAGEMENT SYSTEM
 ប្រព័ន្ធគ្រប់គ្រងហាងបោកគក់
 Project Requirements, Database Design & Folder Structure
+
+Presentation documents: [English](docs/project-presentation-en.md) · [Khmer](docs/project-presentation-km.md)
+
+For day-to-day instructions, see the [Laundry Management System User Guide](docs/system-user-guide.md).
+
 Document metadata	Value
 Version	1.0 — System Design / Before Coding
 Date	16 October 2026
